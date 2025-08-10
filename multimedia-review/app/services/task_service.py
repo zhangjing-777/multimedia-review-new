@@ -11,7 +11,7 @@ import uuid
 
 from app.models.task import ReviewTask, TaskStatus, StrategyType
 from app.models.file import ReviewFile, FileStatus
-from app.models.result import ReviewResult, ViolationType
+from app.models.result import ReviewResult, ViolationResult
 from app.utils.response import NotFoundError, BusinessError
 
 
@@ -277,18 +277,10 @@ class TaskService:
         self.db.commit()
         
         return True
-    
+
     def update_task_progress(self, task_id: str, processed_files: int = None) -> ReviewTask:
-        """
-        更新任务处理进度
+        """更新任务处理进度"""
         
-        Args:
-            task_id: 任务ID
-            processed_files: 已处理文件数
-            
-        Returns:
-            更新后的任务对象
-        """
         task = self.get_task_by_id(task_id)
         
         if processed_files is not None:
@@ -297,11 +289,15 @@ class TaskService:
         # 更新进度百分比
         task.update_progress()
         
-        # 更新违规文件统计
+        # 更新不合规文件统计（重新定义violation_count为不合规文件数）
         violation_count = self.db.query(ReviewFile).filter(
             and_(
                 ReviewFile.task_id == task_id,
-                ReviewFile.violation_count > 0
+                ReviewFile.id.in_(
+                    self.db.query(ReviewResult.file_id).filter(
+                        ReviewResult.violation_result == ViolationResult.NON_COMPLIANT
+                    ).distinct()
+                )
             )
         ).count()
         task.violation_count = violation_count
@@ -312,19 +308,10 @@ class TaskService:
         self.db.refresh(task)
         
         return task
-    
+
     def complete_task(self, task_id: str, success: bool = True, error_message: str = None) -> ReviewTask:
-        """
-        完成任务处理
+        """完成任务处理"""
         
-        Args:
-            task_id: 任务ID
-            success: 是否成功完成
-            error_message: 错误信息（失败时）
-            
-        Returns:
-            更新后的任务对象
-        """
         task = self.get_task_by_id(task_id)
         
         if success:
@@ -340,7 +327,11 @@ class TaskService:
         violation_count = self.db.query(ReviewFile).filter(
             and_(
                 ReviewFile.task_id == task_id,
-                ReviewFile.violation_count > 0
+                ReviewFile.id.in_(
+                    self.db.query(ReviewResult.file_id).filter(
+                        ReviewResult.violation_result == ViolationResult.NON_COMPLIANT
+                    ).distinct()
+                )
             )
         ).count()
         task.violation_count = violation_count
@@ -381,17 +372,9 @@ class TaskService:
         self.db.refresh(task)
         
         return task
-    
+
     def get_task_statistics(self, task_id: str) -> Dict:
-        """
-        获取任务统计信息
-        
-        Args:
-            task_id: 任务ID
-            
-        Returns:
-            统计信息字典
-        """
+        """获取任务统计信息"""
         task = self.get_task_by_id(task_id)
         
         # 文件状态统计
@@ -406,17 +389,16 @@ class TaskService:
         for status, count in file_stats:
             file_status_counts[status.value] = count
         
-        # 违规类型统计
-        violation_stats = self.db.query(
-            ReviewResult.violation_type,
+        result_stats = self.db.query(
+            ReviewResult.violation_result,
             func.count(ReviewResult.id).label('count')
         ).join(ReviewFile).filter(
             ReviewFile.task_id == task_id
-        ).group_by(ReviewResult.violation_type).all()
+        ).group_by(ReviewResult.violation_result).all()
         
-        violation_counts = {}
-        for violation_type, count in violation_stats:
-            violation_counts[violation_type.value] = count
+        result_counts = {}
+        for violation_result, count in result_stats:
+            result_counts[violation_result.value] = count
         
         # 处理时长
         processing_duration = None
@@ -424,15 +406,22 @@ class TaskService:
             duration = task.completed_at - task.started_at
             processing_duration = int(duration.total_seconds())
         
+        # 计算不合规数量
+        non_compliant_count = self.db.query(ReviewResult).join(ReviewFile).filter(
+            ReviewFile.task_id == task_id,
+            ReviewResult.violation_result == "不合规"
+        ).count()
+        
         return {
             "task_info": task.to_dict(),
             "file_status_counts": file_status_counts,
-            "violation_counts": violation_counts,
+            "result_counts": result_counts,  
             "processing_duration": processing_duration,
-            "total_violations": sum(violation_counts.values()),
+            "total_detections": sum(result_counts.values()),  
+            "non_compliant_count": non_compliant_count, 
             "completion_rate": task.progress
         }
-    
+
     def recheck_task(self, task_id: str) -> bool:
         """
         重新审核任务（重置状态并重新处理）

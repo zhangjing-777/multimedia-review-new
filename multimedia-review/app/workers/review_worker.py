@@ -16,8 +16,9 @@ from app.services import (
 )
 from app.models.task import TaskStatus, ReviewTask
 from app.models.file import FileStatus, FileType, ReviewFile
-from app.models.result import ReviewResult, ViolationType, SourceType
+from app.models.result import ReviewResult, ViolationResult, SourceType
 from app.utils.file_utils import FileUtils
+
 
 
 @celery_app.task(bind=True, name="process_review_task")
@@ -406,23 +407,22 @@ def _save_violation_result(
     db: Session = None,
     timestamp: float = None
 ):
-    """保存违规结果到数据库"""
+    """保存检测结果到数据库（包括合规、不合规、不确定三种结果）"""
     try:
-        # 转换违规类型
-        violation_type = _get_violation_type_enum(violation.get("violation_type"))
-        if not violation_type:
-            logger.warning(f"未知的违规类型: {violation.get('violation_type')}")
-            return
+        
+        # 获取检测结果
+        violation_result_str = violation.get("violation_result", "不确定")
+        violation_result = _get_violation_result_enum(violation_result_str)
         
         # 确保数据库会话可用
         if db is None:
-            logger.error("数据库会话为空，无法保存违规结果")
+            logger.error("数据库会话为空，无法保存检测结果")
             return
         
         # 创建审核结果对象
         result = ReviewResult(
             file_id=file_id,
-            violation_type=violation_type,
+            violation_result=violation_result, 
             source_type=SourceType(violation.get("source_type", "ocr")),
             confidence_score=float(violation.get("confidence_score", 0.0)),
             evidence=violation.get("evidence", ""),
@@ -438,76 +438,51 @@ def _save_violation_result(
         # 保存到数据库
         db.add(result)
         db.commit()
-        logger.info(f"成功保存违规结果: {violation_type.value}, 置信度: {result.confidence_score}")
+        logger.info(f"成功保存检测结果: {violation_result.value}, 置信度: {result.confidence_score}")
     
     except Exception as e:
-        logger.error(f"保存违规结果失败: {e}")
+        logger.error(f"保存检测结果失败: {e}")
         if db:
             try:
                 db.rollback()
             except Exception as rollback_error:
                 logger.error(f"回滚事务失败: {rollback_error}")
 
-
-def _get_violation_type_enum(violation_type_str: str) -> ViolationType:
-    """将字符串转换为违规类型枚举"""
-    if not violation_type_str:
-        return None
+def _get_violation_result_enum(result_str: str) -> 'ViolationResult':
+    """将字符串转换为检测结果枚举"""
+    
+    if not result_str:
+        return ViolationResult.UNCERTAIN
         
-    # 完整的类型映射
-    type_map = {
-        "涉黄": ViolationType.PORNOGRAPHY,
-        "涉政": ViolationType.POLITICS,
-        "暴力": ViolationType.VIOLENCE,
-        "广告": ViolationType.ADVERTISEMENT,
-        "违禁词": ViolationType.PROHIBITED_WORDS,
-        "恐怖主义": ViolationType.TERRORISM,
-        "赌博": ViolationType.GAMBLING,
-        "毒品": ViolationType.DRUGS,
-        "自定义": ViolationType.CUSTOM,
-        # 添加英文映射
-        "pornography": ViolationType.PORNOGRAPHY,
-        "politics": ViolationType.POLITICS,
-        "violence": ViolationType.VIOLENCE,
-        "advertisement": ViolationType.ADVERTISEMENT,
-        "prohibited_words": ViolationType.PROHIBITED_WORDS,
-        "terrorism": ViolationType.TERRORISM,
-        "gambling": ViolationType.GAMBLING,
-        "drugs": ViolationType.DRUGS,
-        "custom": ViolationType.CUSTOM,
+    result_map = {
+        "不合规": ViolationResult.NON_COMPLIANT,
+        "合规": ViolationResult.COMPLIANT,
+        "不确定": ViolationResult.UNCERTAIN,
+        # 英文映射
+        "non_compliant": ViolationResult.NON_COMPLIANT,
+        "compliant": ViolationResult.COMPLIANT,
+        "uncertain": ViolationResult.UNCERTAIN,
     }
     
     # 转换为小写进行匹配
-    violation_lower = violation_type_str.lower()
+    result_lower = result_str.lower()
     
     # 先尝试直接匹配
-    if violation_type_str in type_map:
-        return type_map[violation_type_str]
+    if result_str in result_map:
+        return result_map[result_str]
     
     # 再尝试小写匹配
-    if violation_lower in type_map:
-        return type_map[violation_lower]
+    if result_lower in result_map:
+        return result_map[result_lower]
     
     # 模糊匹配
-    if "黄" in violation_type_str or "porn" in violation_lower:
-        return ViolationType.PORNOGRAPHY
-    elif "政" in violation_type_str or "polit" in violation_lower:
-        return ViolationType.POLITICS
-    elif "暴力" in violation_type_str or "violen" in violation_lower:
-        return ViolationType.VIOLENCE
-    elif "广告" in violation_type_str or "ad" in violation_lower:
-        return ViolationType.ADVERTISEMENT
-    elif "恐怖" in violation_type_str or "terror" in violation_lower:
-        return ViolationType.TERRORISM
-    elif "赌博" in violation_type_str or "gambl" in violation_lower:
-        return ViolationType.GAMBLING
-    elif "毒品" in violation_type_str or "drug" in violation_lower:
-        return ViolationType.DRUGS
+    if "合规" in result_str or "compliant" in result_lower:
+        return ViolationResult.COMPLIANT
+    elif "不合规" in result_str or "违规" in result_str or "non" in result_lower:
+        return ViolationResult.NON_COMPLIANT
     else:
-        # 默认返回自定义类型
-        logger.warning(f"未知违规类型，使用自定义类型: {violation_type_str}")
-        return ViolationType.CUSTOM
-
+        return ViolationResult.UNCERTAIN
+    
 
 def _update_task_progress(task_id: str, db: Session):
     """更新任务进度"""

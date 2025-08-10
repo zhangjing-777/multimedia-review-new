@@ -5,7 +5,7 @@
 
 from .task import ReviewTask, TaskStatus, StrategyType
 from .file import ReviewFile, FileType, FileStatus
-from .result import ReviewResult, ViolationType, SourceType
+from .result import ReviewResult, ViolationResult, SourceType
 
 # 导出所有模型类
 __all__ = [
@@ -21,6 +21,6 @@ __all__ = [
     
     # 结果相关
     "ReviewResult",
-    "ViolationType", 
+    "ViolationResult", 
     "SourceType",
 ]

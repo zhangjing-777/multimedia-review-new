@@ -270,18 +270,23 @@ class AIReviewService:
     {detection_content}
 
     请按照以下JSON格式返回分析结果：
-    {{
-        "violations": [
-            {{
-                "type": "违规类型",
-                "confidence": 0.95,
-                "evidence": "具体的违规证据描述",
-                "bbox": [x1, y1, x2, y2]  // 可选，违规区域坐标
-            }}
-        ],
-        "is_safe": true/false,
-        "analysis": "整体分析说明"
-    }}
+{{
+    "overall_result": "合规/不合规/不确定",
+    "evidence_list": [
+        {{
+            "evidence": "具体的证据描述",
+            "confidence": 0.95,
+            "bbox": [x1, y1, x2, y2]
+        }}
+    ],
+    "analysis": "整体分析说明"
+}}
+
+**重要说明：**
+1. overall_result 必填，只能是"合规"、"不合规"或"不确定"
+2. 如果内容完全合规，evidence_list为空，overall_result为"合规"
+3. 如果发现违规内容，evidence_list包含具体证据，overall_result为"不合规"
+4. 如果无法确定是否违规，evidence_list包含具体证据，overall_result为"不确定"
     """
         return prompt
 
@@ -340,43 +345,40 @@ class AIReviewService:
     {detection_content}
 
     请按照以下JSON格式返回分析结果：
-    {{
-        "violations": [
-            {{
-                "type": "违规类型",
-                "confidence": 0.95,
-                "evidence": "具体的违规文本片段",
-                "start_pos": 100,  // 可选，违规文本起始位置
-                "end_pos": 150     // 可选，违规文本结束位置
-            }}
-        ],
-        "is_safe": true/false,
-        "analysis": "整体分析说明",
-        "keywords": ["违规关键词1", "违规关键词2"]  // 可选
-    }}
+{{
+    "overall_result": "合规/不合规/不确定",
+    "evidence_list": [
+        {{
+            "evidence": "具体的违规文本片段",
+            "confidence": 0.95,
+            "start_pos": 100,
+            "end_pos": 150
+        }}
+    ],
+    "analysis": "整体分析说明",
+    "keywords": ["关键词1", "关键词2"]
+}}
 
-    要求：
-    1. evidence要包含具体的违规文本片段
-    2. 分析要客观准确，避免误报
+**重要说明：**
+1. overall_result 必填，只能是"合规"、"不合规"或"不确定"
+2. 如果文本完全合规，evidence_list为空，overall_result为"合规"
+3. 如果发现违规内容，evidence_list包含具体证据，overall_result为"不合规"
+4. 如果无法确定是否违规，evidence_list包含具体证据，overall_result为"不确定"
     """
         return prompt
-               
 
     def _process_visual_result(self, api_result: Dict, image_path: str) -> List[Dict]:
         """处理OpenRouter视觉审核结果"""
         violations = []
         
         try:
-            # OpenRouter返回格式：choices[0].message.content
             if "choices" in api_result and len(api_result["choices"]) > 0:
                 content = api_result["choices"][0]["message"]["content"]
                 
                 # 尝试解析JSON内容
                 try:
-                    # 如果返回的是纯JSON字符串
                     result_data = json.loads(content)
                 except json.JSONDecodeError:
-                    # 如果返回的内容包含其他文本，尝试提取JSON部分
                     import re
                     json_match = re.search(r'\{.*\}', content, re.DOTALL)
                     if json_match:
@@ -385,17 +387,40 @@ class AIReviewService:
                         logger.info(f"无法解析视觉审核结果: {content}")
                         return []
                 
-                # 处理违规结果
-                for violation in result_data.get("violations", []):
+                # 获取总体检测结果
+                overall_result = result_data.get("overall_result", "不确定")
+                evidence_list = result_data.get("evidence_list", [])
+                
+                # 如果有具体证据，为每个证据创建一条记录
+                if evidence_list:
+                    for evidence in evidence_list:
+                        violations.append({
+                            "violation_result": overall_result,
+                            "source_type": SourceType.VISUAL,
+                            "confidence_score": float(evidence.get("confidence", 0.0)),
+                            "evidence": evidence.get("evidence", ""),
+                            "position": {
+                                "bbox": evidence.get("bbox", []),
+                                "image_path": image_path
+                            },
+                            "model_name": api_result.get("model", "unknown"),
+                            "raw_response": api_result
+                        })
+                else:
+                    # 没有具体证据时，创建一条总体记录
+                    confidence = 0.9 if overall_result == "合规" else (0.5 if overall_result == "不确定" else 0.8)
+                    evidence_text = {
+                        "合规": "内容检测无违规",
+                        "不确定": result_data.get("analysis", "无法确定内容合规性"),
+                        "不合规": result_data.get("analysis", "检测到违规内容")
+                    }.get(overall_result, "检测结果")
+                    
                     violations.append({
-                        "violation_type": violation.get("type"),
+                        "violation_result": overall_result,
                         "source_type": SourceType.VISUAL,
-                        "confidence_score": float(violation.get("confidence", 0.0)),
-                        "evidence": violation.get("evidence", ""),
-                        "position": {
-                            "bbox": violation.get("bbox", []),
-                            "image_path": image_path
-                        },
+                        "confidence_score": confidence,
+                        "evidence": evidence_text,
+                        "position": {"image_path": image_path},
                         "model_name": api_result.get("model", "unknown"),
                         "raw_response": api_result
                     })
@@ -405,13 +430,11 @@ class AIReviewService:
         
         return violations
 
-
     def _process_text_result(self, api_result: Dict, text_content: str) -> List[Dict]:
         """处理OpenRouter文本审核结果"""
         violations = []
         
         try:
-            # OpenRouter返回格式：choices[0].message.content
             if "choices" in api_result and len(api_result["choices"]) > 0:
                 content = api_result["choices"][0]["message"]["content"]
                 
@@ -419,7 +442,6 @@ class AIReviewService:
                 try:
                     result_data = json.loads(content)
                 except json.JSONDecodeError:
-                    # 尝试提取JSON部分
                     import re
                     json_match = re.search(r'\{.*\}', content, re.DOTALL)
                     if json_match:
@@ -428,18 +450,42 @@ class AIReviewService:
                         logger.info(f"无法解析文本审核结果: {content}")
                         return []
                 
-                # 处理违规结果
-                for violation in result_data.get("violations", []):
+                # 获取总体检测结果
+                overall_result = result_data.get("overall_result", "不确定")
+                evidence_list = result_data.get("evidence_list", [])
+                
+                # 如果有具体证据，为每个证据创建一条记录
+                if evidence_list:
+                    for evidence in evidence_list:
+                        violations.append({
+                            "violation_result": overall_result,
+                            "source_type": SourceType.OCR,
+                            "confidence_score": float(evidence.get("confidence", 0.0)),
+                            "evidence": evidence.get("evidence", ""),
+                            "evidence_text": evidence.get("evidence", ""),
+                            "position": {
+                                "start_pos": evidence.get("start_pos"),
+                                "end_pos": evidence.get("end_pos")
+                            },
+                            "model_name": api_result.get("model", "unknown"),
+                            "raw_response": api_result
+                        })
+                else:
+                    # 没有具体证据时，创建一条总体记录
+                    confidence = 0.9 if overall_result == "合规" else (0.5 if overall_result == "不确定" else 0.8)
+                    evidence_text = {
+                        "合规": "文本内容检测无违规",
+                        "不确定": result_data.get("analysis", "无法确定文本合规性"),
+                        "不合规": result_data.get("analysis", "检测到违规内容")
+                    }.get(overall_result, "检测结果")
+                    
                     violations.append({
-                        "violation_type": violation.get("type"),
+                        "violation_result": overall_result,
                         "source_type": SourceType.OCR,
-                        "confidence_score": float(violation.get("confidence", 0.0)),
-                        "evidence": violation.get("evidence", ""),
-                        "evidence_text": violation.get("evidence", ""),
-                        "position": {
-                            "start_pos": violation.get("start_pos"),
-                            "end_pos": violation.get("end_pos")
-                        },
+                        "confidence_score": confidence,
+                        "evidence": evidence_text,
+                        "evidence_text": text_content[:200] + "..." if len(text_content) > 200 else text_content,
+                        "position": {},
                         "model_name": api_result.get("model", "unknown"),
                         "raw_response": api_result
                     })

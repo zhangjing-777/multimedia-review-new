@@ -7,13 +7,21 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, File, UploadFile, Form, Query, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
+from fastapi.responses import Response
+import csv
+import json
+from io import StringIO
+from datetime import datetime
+from pathlib import Path
+from sqlalchemy import desc, asc, func
 
 from app.database import get_db
 from app.services.file_service import FileService
 from app.services.queue_service import QueueService
-from app.models.file import FileType, FileStatus
+from app.models.file import FileType, FileStatus, ReviewFile
 from app.utils.response import APIResponse, ValidationError
 from app.config import get_settings
+from app.models.task import ReviewTask
 
 # 创建路由器
 router = APIRouter()
@@ -68,7 +76,6 @@ async def upload_single_file(
     
     # 验证文件类型
     if file.filename:
-        from pathlib import Path
         ext = Path(file.filename).suffix.lower().lstrip('.')
         if ext not in settings.ALLOWED_EXTENSIONS:
             raise ValidationError(f"不支持的文件类型: {ext}")
@@ -300,7 +307,6 @@ async def download_file(
     """
     下载原始文件
     """
-    from fastapi.responses import Response
     
     file_service = FileService(db)
     
@@ -335,3 +341,338 @@ async def get_queue_status():
         data=status,
         message="队列状态获取成功"
     )
+
+
+@router.get("/files", summary="查询所有文件列表")
+async def get_all_files(
+    page: int = Query(1, ge=1, description="页码"),
+    size: int = Query(20, ge=1, le=100, description="每页大小"),
+    file_type: Optional[FileType] = Query(None, description="文件类型过滤"),
+    status: Optional[FileStatus] = Query(None, description="文件状态过滤"),
+    original_name: Optional[str] = Query(None, description="文件名搜索（模糊匹配）"),
+    creator_id: Optional[str] = Query(None, description="创建者过滤"),
+    start_date: Optional[str] = Query(None, description="开始日期过滤 (YYYY-MM-DD)"),
+    end_date: Optional[str] = Query(None, description="结束日期过滤 (YYYY-MM-DD)"),
+    min_size: Optional[int] = Query(None, ge=0, description="最小文件大小（字节）"),
+    max_size: Optional[int] = Query(None, ge=0, description="最大文件大小（字节）"),
+    has_violations: Optional[bool] = Query(None, description="是否有违规内容"),
+    order_by: str = Query("created_at", regex="^(created_at|file_size|processed_at|original_name)$", description="排序字段"),
+    order_desc: bool = Query(True, description="是否降序排列"),
+    db: Session = Depends(get_db)
+):
+    """
+    查询所有文件列表，支持多种过滤条件
+    
+    - **page**: 页码，默认1
+    - **size**: 每页大小，默认20，最大100
+    - **file_type**: 文件类型过滤 (document/image/video/text)
+    - **status**: 文件状态过滤 (pending/processing/completed/failed/cancelled)
+    - **original_name**: 文件名模糊搜索
+    - **creator_id**: 创建者ID过滤
+    - **start_date**: 开始日期过滤
+    - **end_date**: 结束日期过滤
+    - **min_size**: 最小文件大小
+    - **max_size**: 最大文件大小
+    - **has_violations**: 是否有违规内容
+    - **order_by**: 排序字段 (created_at/file_size/processed_at/original_name)
+    - **order_desc**: 是否降序排列
+    """
+    
+    file_service = FileService(db)
+    
+    # 构建查询
+    query = db.query(ReviewFile)
+    
+    # 文件类型过滤
+    if file_type:
+        query = query.filter(ReviewFile.file_type == file_type)
+    
+    # 文件状态过滤
+    if status:
+        query = query.filter(ReviewFile.status == status)
+    
+    # 文件名模糊搜索
+    if original_name and original_name.strip():
+        search_term = f"%{original_name.strip()}%"
+        query = query.filter(ReviewFile.original_name.ilike(search_term))
+    
+    # 创建者过滤（通过关联任务）
+    if creator_id:
+        query = query.join(ReviewTask).filter(ReviewTask.creator_id == creator_id)
+    
+    # 日期范围过滤
+    if start_date:
+        try:
+            start_datetime = datetime.strptime(start_date, "%Y-%m-%d")
+            query = query.filter(ReviewFile.created_at >= start_datetime)
+        except ValueError:
+            raise ValidationError("开始日期格式错误，请使用 YYYY-MM-DD 格式")
+    
+    if end_date:
+        try:
+            end_datetime = datetime.strptime(end_date, "%Y-%m-%d")
+            # 结束日期包含当天全天
+            end_datetime = end_datetime.replace(hour=23, minute=59, second=59)
+            query = query.filter(ReviewFile.created_at <= end_datetime)
+        except ValueError:
+            raise ValidationError("结束日期格式错误，请使用 YYYY-MM-DD 格式")
+    
+    # 文件大小过滤
+    if min_size is not None:
+        query = query.filter(ReviewFile.file_size >= min_size)
+    
+    if max_size is not None:
+        query = query.filter(ReviewFile.file_size <= max_size)
+    
+    # 是否有违规内容过滤
+    if has_violations is not None:
+        if has_violations:
+            query = query.filter(ReviewFile.violation_count > 0)
+        else:
+            query = query.filter(ReviewFile.violation_count == 0)
+    
+    # 排序
+    order_column = getattr(ReviewFile, order_by)
+    if order_desc:
+        query = query.order_by(desc(order_column))
+    else:
+        query = query.order_by(asc(order_column))
+    
+    # 获取总数量
+    total = query.count()
+    
+    # 分页查询
+    files = query.offset((page - 1) * size).limit(size).all()
+    
+    # 转换为字典格式，添加关联任务信息
+    file_list = []
+    for file_obj in files:
+        file_dict = file_obj.to_dict()
+        
+        # 添加任务信息
+        if file_obj.task:
+            file_dict["task_info"] = {
+                "id": str(file_obj.task.id),
+                "name": file_obj.task.name,
+                "status": file_obj.task.status.value,
+                "creator_id": file_obj.task.creator_id
+            }
+        else:
+            file_dict["task_info"] = None
+        
+        # 添加额外的计算字段
+        file_dict["file_size_mb"] = file_obj.file_size_mb
+        file_dict["has_violations"] = file_obj.violation_count > 0
+        file_dict["file_exists"] = file_obj.exists
+        
+        file_list.append(file_dict)
+    
+    return APIResponse.paginated(
+        items=file_list,
+        total=total,
+        page=page,
+        size=size,
+        message="文件列表查询成功"
+    )
+
+
+@router.get("/files/statistics", summary="获取文件统计信息")
+async def get_files_statistics(
+    file_type: Optional[FileType] = Query(None, description="文件类型过滤"),
+    status: Optional[FileStatus] = Query(None, description="文件状态过滤"),
+    creator_id: Optional[str] = Query(None, description="创建者过滤"),
+    start_date: Optional[str] = Query(None, description="开始日期 (YYYY-MM-DD)"),
+    end_date: Optional[str] = Query(None, description="结束日期 (YYYY-MM-DD)"),
+    db: Session = Depends(get_db)
+):
+    """
+    获取文件统计信息
+    
+    支持与文件列表相同的过滤条件
+    """
+    
+    # 构建基础查询
+    query = db.query(ReviewFile)
+    
+    # 应用过滤条件（与上面的查询接口保持一致）
+    if file_type:
+        query = query.filter(ReviewFile.file_type == file_type)
+    
+    if status:
+        query = query.filter(ReviewFile.status == status)
+    
+    if creator_id:
+        query = query.join(ReviewTask).filter(ReviewTask.creator_id == creator_id)
+    
+    if start_date:
+        try:
+            start_datetime = datetime.strptime(start_date, "%Y-%m-%d")
+            query = query.filter(ReviewFile.created_at >= start_datetime)
+        except ValueError:
+            raise ValidationError("开始日期格式错误")
+    
+    if end_date:
+        try:
+            end_datetime = datetime.strptime(end_date, "%Y-%m-%d")
+            end_datetime = end_datetime.replace(hour=23, minute=59, second=59)
+            query = query.filter(ReviewFile.created_at <= end_datetime)
+        except ValueError:
+            raise ValidationError("结束日期格式错误")
+    
+    # 统计查询
+    
+    # 文件类型统计
+    type_stats = db.query(
+        ReviewFile.file_type,
+        func.count(ReviewFile.id).label('count'),
+        func.sum(ReviewFile.file_size).label('total_size')
+    ).filter(
+        ReviewFile.id.in_(query.with_entities(ReviewFile.id))
+    ).group_by(ReviewFile.file_type).all()
+    
+    # 文件状态统计
+    status_stats = db.query(
+        ReviewFile.status,
+        func.count(ReviewFile.id).label('count')
+    ).filter(
+        ReviewFile.id.in_(query.with_entities(ReviewFile.id))
+    ).group_by(ReviewFile.status).all()
+    
+    # 基础统计
+    total_files = query.count()
+    total_size = query.with_entities(func.sum(ReviewFile.file_size)).scalar() or 0
+    avg_size = query.with_entities(func.avg(ReviewFile.file_size)).scalar() or 0
+    
+    # 违规文件统计
+    violation_files = query.filter(ReviewFile.violation_count > 0).count()
+    
+    # 处理完成统计
+    completed_files = query.filter(ReviewFile.status == FileStatus.COMPLETED).count()
+    failed_files = query.filter(ReviewFile.status == FileStatus.FAILED).count()
+    processing_files = query.filter(ReviewFile.status == FileStatus.PROCESSING).count()
+    
+    statistics = {
+        "total_files": total_files,
+        "total_size_bytes": total_size,
+        "total_size_mb": round(total_size / (1024 * 1024), 2) if total_size else 0,
+        "average_size_mb": round(avg_size / (1024 * 1024), 2) if avg_size else 0,
+        "violation_files": violation_files,
+        "violation_rate": round(violation_files / total_files * 100, 2) if total_files > 0 else 0,
+        "completed_files": completed_files,
+        "failed_files": failed_files,
+        "processing_files": processing_files,
+        "completion_rate": round(completed_files / total_files * 100, 2) if total_files > 0 else 0,
+        "file_type_stats": {
+            stat.file_type.value: {
+                "count": stat.count,
+                "total_size_mb": round(stat.total_size / (1024 * 1024), 2) if stat.total_size else 0
+            }
+            for stat in type_stats
+        },
+        "status_stats": {
+            stat.status.value: stat.count
+            for stat in status_stats
+        }
+    }
+    
+    return APIResponse.success(
+        data=statistics,
+        message="文件统计信息获取成功"
+    )
+
+
+@router.get("/files/export", summary="导出文件列表")
+async def export_files_list(
+    format: str = Query("csv", regex="^(csv|json)$", description="导出格式"),
+    file_type: Optional[FileType] = Query(None, description="文件类型过滤"),
+    status: Optional[FileStatus] = Query(None, description="文件状态过滤"),
+    has_violations: Optional[bool] = Query(None, description="是否有违规内容"),
+    limit: int = Query(1000, ge=1, le=10000, description="导出数量限制"),
+    db: Session = Depends(get_db)
+):
+    """
+    导出文件列表数据
+    
+    - **format**: 导出格式 (csv/json)
+    - **limit**: 导出数量限制，最大10000
+    """
+    
+    # 构建查询
+    query = db.query(ReviewFile)
+    
+    if file_type:
+        query = query.filter(ReviewFile.file_type == file_type)
+    
+    if status:
+        query = query.filter(ReviewFile.status == status)
+    
+    if has_violations is not None:
+        if has_violations:
+            query = query.filter(ReviewFile.violation_count > 0)
+        else:
+            query = query.filter(ReviewFile.violation_count == 0)
+    
+    # 获取数据
+    files = query.order_by(ReviewFile.created_at.desc()).limit(limit).all()
+    
+    if format == "csv":
+        # CSV导出
+        output = StringIO()
+        writer = csv.writer(output)
+        
+        # 写入表头
+        headers = [
+            "ID", "原始文件名", "文件类型", "文件大小(MB)", "状态", 
+            "进度", "违规数量", "创建时间", "处理完成时间", "任务名称"
+        ]
+        writer.writerow(headers)
+        
+        # 写入数据
+        for file_obj in files:
+            row = [
+                str(file_obj.id),
+                file_obj.original_name,
+                file_obj.file_type.value,
+                file_obj.file_size_mb,
+                file_obj.status.value,
+                file_obj.progress,
+                file_obj.violation_count,
+                file_obj.created_at.strftime("%Y-%m-%d %H:%M:%S") if file_obj.created_at else "",
+                file_obj.processed_at.strftime("%Y-%m-%d %H:%M:%S") if file_obj.processed_at else "",
+                file_obj.task.name if file_obj.task else ""
+            ]
+            writer.writerow(row)
+        
+        content = output.getvalue()
+        output.close()
+        
+        # 生成文件名
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"files_export_{timestamp}.csv"
+        
+        return Response(
+            content=content.encode('utf-8-sig'),  # 使用 UTF-8 BOM 确保Excel正确显示中文
+            media_type="text/csv",
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
+    
+    else:
+        # JSON导出
+        file_list = []
+        for file_obj in files:
+            file_dict = file_obj.to_dict()
+            if file_obj.task:
+                file_dict["task_name"] = file_obj.task.name
+            file_list.append(file_dict)
+        
+        content = json.dumps(file_list, ensure_ascii=False, indent=2)
+        
+        # 生成文件名
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"files_export_{timestamp}.json"
+        
+        return Response(
+            content=content.encode('utf-8'),
+            media_type="application/json",
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )

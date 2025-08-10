@@ -98,7 +98,7 @@ COMMENT ON COLUMN review_files.processed_at IS '处理完成时间';
 CREATE TABLE review_results (
     id UUID PRIMARY KEY ,
     file_id UUID NOT NULL,
-    violation_type VARCHAR(20) NOT NULL,
+    violation_result VARCHAR(20) NOT NULL,
     source_type VARCHAR(20) NOT NULL,
     confidence_score REAL NOT NULL DEFAULT 0.0,
     evidence TEXT,
@@ -128,7 +128,7 @@ CREATE TABLE review_results (
 COMMENT ON TABLE review_results IS '审核结果表';
 COMMENT ON COLUMN review_results.id IS '结果唯一标识符';
 COMMENT ON COLUMN review_results.file_id IS '所属文件ID';
-COMMENT ON COLUMN review_results.violation_type IS '违规类型';
+COMMENT ON COLUMN review_results.violation_result IS '违规结果';
 COMMENT ON COLUMN review_results.source_type IS '识别来源';
 COMMENT ON COLUMN review_results.confidence_score IS '置信度分数(0-1)';
 COMMENT ON COLUMN review_results.evidence IS '违规证据/内容描述';
@@ -153,7 +153,7 @@ CREATE INDEX idx_review_files_status ON review_files(status);
 CREATE INDEX idx_review_files_created_at ON review_files(created_at);
 
 CREATE INDEX idx_review_results_file_id ON review_results(file_id);
-CREATE INDEX idx_review_results_violation_type ON review_results(violation_type);
+CREATE INDEX idx_review_results_violation_result ON review_results(violation_result);
 CREATE INDEX idx_review_results_is_reviewed ON review_results(is_reviewed);
 CREATE INDEX idx_review_results_created_at ON review_results(created_at);
 

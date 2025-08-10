@@ -13,7 +13,7 @@ from app.models.task import ReviewTask
 from app.utils.file_utils import FileUtils
 from app.utils.response import NotFoundError, BusinessError, ValidationError
 from app.config import get_settings
-
+from app.models.result import ReviewResult, ViolationResult
 
 class FileService:
     """文件管理服务类"""
@@ -285,26 +285,20 @@ class FileService:
         
         return file_obj
     
+    # 修改 app/services/file_service.py 中的统计函数
+
     def update_file_violation_count(self, file_id: str) -> ReviewFile:
-        """
-        更新文件违规数量统计
-        
-        Args:
-            file_id: 文件ID
-            
-        Returns:
-            更新后的文件对象
-        """
-        from app.models.result import ReviewResult
+        """更新文件检测结果统计"""
         
         file_obj = self.get_file_by_id(file_id)
         
-        # 计算违规数量
-        violation_count = self.db.query(ReviewResult).filter(
-            ReviewResult.file_id == file_id
+        # 计算不合规数量
+        non_compliant_count = self.db.query(ReviewResult).filter(
+            ReviewResult.file_id == file_id,
+            ReviewResult.violation_result == ViolationResult.NON_COMPLIANT
         ).count()
         
-        file_obj.violation_count = violation_count
+        file_obj.violation_count = non_compliant_count  # 重新定义为不合规数量
         file_obj.updated_at = datetime.utcnow()
         
         self.db.commit()

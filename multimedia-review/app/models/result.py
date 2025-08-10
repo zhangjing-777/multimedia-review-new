@@ -13,17 +13,11 @@ import enum
 from app.database import Base
 
 
-class ViolationType(str, enum.Enum):
-    """违规类型枚举"""
-    PORNOGRAPHY = "涉黄"      # 色情内容
-    POLITICS = "涉政"         # 政治敏感
-    VIOLENCE = "暴力"         # 暴力内容
-    ADVERTISEMENT = "广告"     # 广告内容
-    PROHIBITED_WORDS = "违禁词" # 违禁词汇
-    TERRORISM = "恐怖主义"     # 恐怖主义
-    GAMBLING = "赌博"         # 赌博内容
-    DRUGS = "毒品"           # 毒品相关
-    CUSTOM = "自定义"         # 自定义违规
+class ViolationResult(str, enum.Enum):
+    """检测结果枚举"""
+    NON_COMPLIANT = "不合规"    # 不合规
+    COMPLIANT = "合规"          # 合规  
+    UNCERTAIN = "不确定"        # 不确定
 
 
 class SourceType(str, enum.Enum):
@@ -56,10 +50,10 @@ class ReviewResult(Base):
     )
     
     # 违规信息
-    violation_type = Column(
-        SQLEnum(ViolationType),
+    violation_result = Column(
+        SQLEnum(ViolationResult),
         nullable=False,
-        comment="违规类型"
+        comment="检测结果"
     )
     
     source_type = Column(
@@ -188,7 +182,7 @@ class ReviewResult(Base):
         return {
             "id": str(self.id),
             "file_id": str(self.file_id),
-            "violation_type": self.violation_type.value,
+            "violation_result": self.violation_result.value,
             "source_type": self.source_type.value,
             "confidence_score": self.confidence_score,
             "evidence": self.evidence,
@@ -218,9 +212,10 @@ class ReviewResult(Base):
         """是否需要人工复审"""
         # 低置信度或未复审的结果需要人工处理
         return not self.is_reviewed and (
-            self.confidence_score < 0.6 or 
-            self.violation_type in [ViolationType.POLITICS, ViolationType.TERRORISM]
+            self.violation_result == ViolationResult.UNCERTAIN or
+            (self.violation_result == ViolationResult.NON_COMPLIANT and self.confidence_score < 0.6)
         )
+
     
     def mark_reviewed(self, reviewer_id: str, result: str, comment: str = None):
         """标记为已复审"""
