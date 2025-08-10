@@ -9,14 +9,14 @@ from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.pool import QueuePool
 from typing import Generator
 from loguru import logger
+from sqlalchemy.dialects.postgresql.psycopg2 import PGDialect_psycopg2
 import redis
 from app.config import get_settings
 
 # 修补SQLAlchemy以支持openGauss
 def patch_opengauss():
     """修补SQLAlchemy支持openGauss"""
-    from sqlalchemy.dialects.postgresql.psycopg2 import PGDialect_psycopg2
-    
+       
     original_get_server_version_info = PGDialect_psycopg2._get_server_version_info
     
     def patched_get_server_version_info(self, connection):

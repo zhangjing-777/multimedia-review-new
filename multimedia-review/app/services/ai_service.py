@@ -2,7 +2,7 @@
 AI审核服务
 负责调用VLLM和LLM进行内容审核
 """
-
+import re
 import httpx
 import json
 import base64
@@ -10,7 +10,7 @@ from typing import List, Dict, Optional
 import asyncio
 from loguru import logger
 from app.config import get_settings
-from app.models.result import ViolationType, SourceType
+from app.models.result import SourceType
 
 
 class AIReviewService:
@@ -379,7 +379,7 @@ class AIReviewService:
                 try:
                     result_data = json.loads(content)
                 except json.JSONDecodeError:
-                    import re
+                    
                     json_match = re.search(r'\{.*\}', content, re.DOTALL)
                     if json_match:
                         result_data = json.loads(json_match.group())
@@ -442,7 +442,6 @@ class AIReviewService:
                 try:
                     result_data = json.loads(content)
                 except json.JSONDecodeError:
-                    import re
                     json_match = re.search(r'\{.*\}', content, re.DOTALL)
                     if json_match:
                         result_data = json.loads(json_match.group())

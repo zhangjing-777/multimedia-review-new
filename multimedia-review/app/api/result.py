@@ -3,10 +3,11 @@
 提供审核结果查询、人工标注等接口
 """
 
-from typing import List, Optional
+from datetime import datetime
+import re
+from typing import List, Optional, Dict
 from fastapi import APIRouter, Depends, Query, Path, Body
 from pydantic import BaseModel, Field, ValidationError
-
 from sqlalchemy.orm import Session
 from loguru import logger
 
@@ -14,6 +15,9 @@ from app.database import get_db
 from app.models.result import ReviewResult, ViolationResult, SourceType
 from app.models.file import ReviewFile
 from app.utils.response import APIResponse, NotFoundError
+from app.services.file_service import FileService
+from app.services.task_service import TaskService
+
 
 # 创建路由器
 router = APIRouter()
@@ -21,11 +25,19 @@ router = APIRouter()
 
 # 请求模型定义
 class MarkResultRequest(BaseModel):
-    """标记审核结果请求模型"""
+    """标记审核结果请求模型（增强版）"""
     reviewer_id: str = Field(..., description="复审人员ID")
-    review_result: str = Field(..., pattern="^(confirmed|rejected|modified)$", description="复审结果")  # 改为 pattern
+    review_result: str = Field(..., pattern="^(confirmed|rejected|modified)$", description="复审结果")
     review_comment: Optional[str] = Field(None, max_length=500, description="复审备注")
-
+    
+    # 新增：可修改的字段
+    violation_result: Optional[ViolationResult] = Field(None, description="修正后的检测结果")
+    confidence_score: Optional[float] = Field(None, ge=0, le=1, description="修正后的置信度")
+    evidence: Optional[str] = Field(None, max_length=1000, description="修正后的证据描述")
+    evidence_text: Optional[str] = Field(None, max_length=2000, description="修正后的证据文本")
+    position: Optional[Dict] = Field(None, description="修正后的位置信息")
+    page_number: Optional[int] = Field(None, ge=1, description="修正后的页码")
+    timestamp: Optional[float] = Field(None, ge=0, description="修正后的时间戳")
 
 class ResultQueryParams(BaseModel):
     """结果查询参数"""
@@ -323,18 +335,225 @@ async def get_result_detail(
     )
 
 
-@router.post("/{result_id}/mark", summary="人工标记审核结果")
+@router.post("/{result_id}/mark", summary="人工标记并修正审核结果")
 async def mark_result(
     request: MarkResultRequest,
     result_id: str = Path(..., description="结果ID"),
     db: Session = Depends(get_db)
 ):
     """
-    人工标记/修改审核结果
+    人工标记/修改审核结果（增强版）
     
+    支持在标记的同时修正AI识别的错误：
     - **reviewer_id**: 复审人员ID
     - **review_result**: 复审结果 (confirmed/rejected/modified)
     - **review_comment**: 复审备注（可选）
+    
+    可修正的字段：
+    - **violation_result**: 修正检测结果（合规/不合规/不确定）
+    - **confidence_score**: 修正置信度分数
+    - **evidence**: 修正证据描述
+    - **evidence_text**: 修正证据文本
+    - **position**: 修正位置信息
+    - **page_number**: 修正页码
+    - **timestamp**: 修正时间戳
+    
+    当 review_result 为 "modified" 时，建议同时提供要修正的字段。
+    """
+    
+    result = db.query(ReviewResult).filter(
+        ReviewResult.id == result_id
+    ).first()
+    
+    if not result:
+        raise NotFoundError(f"审核结果不存在: {result_id}")
+    
+    # 记录修改前的值（用于日志和审计）
+    original_values = {}
+    modified_fields = []
+    
+    # 检查并应用字段修改
+    if request.violation_result is not None and request.violation_result != result.violation_result:
+        original_values["violation_result"] = result.violation_result.value if result.violation_result else None
+        result.violation_result = request.violation_result
+        modified_fields.append("violation_result")
+    
+    if request.confidence_score is not None and request.confidence_score != result.confidence_score:
+        original_values["confidence_score"] = result.confidence_score
+        result.confidence_score = request.confidence_score
+        modified_fields.append("confidence_score")
+    
+    if request.evidence is not None and request.evidence != result.evidence:
+        original_values["evidence"] = result.evidence
+        result.evidence = request.evidence
+        modified_fields.append("evidence")
+    
+    if request.evidence_text is not None and request.evidence_text != result.evidence_text:
+        original_values["evidence_text"] = result.evidence_text
+        result.evidence_text = request.evidence_text
+        modified_fields.append("evidence_text")
+    
+    if request.position is not None and request.position != result.position:
+        original_values["position"] = result.position
+        result.position = request.position
+        modified_fields.append("position")
+    
+    if request.page_number is not None and request.page_number != result.page_number:
+        original_values["page_number"] = result.page_number
+        result.page_number = request.page_number
+        modified_fields.append("page_number")
+    
+    if request.timestamp is not None and request.timestamp != result.timestamp:
+        original_values["timestamp"] = result.timestamp
+        result.timestamp = request.timestamp
+        modified_fields.append("timestamp")
+    
+    # 构建完整的复审备注
+    full_comment = request.review_comment or ""
+    if modified_fields:
+        modification_log = f"修改字段: {', '.join(modified_fields)}"
+        if original_values:
+            modification_log += f" | 原值: {original_values}"
+        full_comment = f"{full_comment}\n[系统记录] {modification_log}" if full_comment else f"[系统记录] {modification_log}"
+    
+    # 标记为已复审
+    result.mark_reviewed(
+        reviewer_id=request.reviewer_id,
+        result=request.review_result,
+        comment=full_comment
+    )
+    
+    # 更新时间戳
+    result.updated_at = datetime.utcnow()
+    
+    db.commit()
+    db.refresh(result)
+    
+    # 记录操作日志
+    logger.info(f"用户 {request.reviewer_id} 标记结果 {result_id}: {request.review_result}" + 
+               (f", 修改字段: {modified_fields}" if modified_fields else ""))
+    
+    # 返回结果，包含修改信息
+    response_data = result.to_dict()
+    response_data["modification_info"] = {
+        "modified_fields": modified_fields,
+        "original_values": original_values,
+        "total_modifications": len(modified_fields)
+    }
+    
+    return APIResponse.success(
+        data=response_data,
+        message=f"审核结果标记成功" + (f"，修改了 {len(modified_fields)} 个字段" if modified_fields else "")
+    )
+
+
+@router.post("/batch/mark", summary="批量标记审核结果")
+async def batch_mark_results(
+    result_ids: List[str] = Body(..., description="结果ID列表"),
+    reviewer_id: str = Body(..., description="复审人员ID"),
+    review_result: str = Body(..., pattern="^(confirmed|rejected|modified)$", description="复审结果"),
+    review_comment: Optional[str] = Body(None, description="复审备注"),
+    # 批量修改时只支持部分字段，避免复杂性
+    violation_result: Optional[ViolationResult] = Body(None, description="统一修正的检测结果"),
+    confidence_score: Optional[float] = Body(None, ge=0, le=1, description="统一修正的置信度"),
+    db: Session = Depends(get_db)
+):
+    """
+    批量标记审核结果
+    
+    支持对多个结果进行统一标记和修正：
+    - 最多支持50个结果的批量操作
+    - 支持统一修改检测结果和置信度
+    - 自动记录批量操作日志
+    """
+    if len(result_ids) > 50:
+        raise ValidationError("批量标记最多支持50个结果")
+    
+    if not result_ids:
+        raise ValidationError("结果ID列表不能为空")
+    
+    # 查找存在的结果
+    results = db.query(ReviewResult).filter(
+        ReviewResult.id.in_(result_ids)
+    ).all()
+    
+    if not results:
+        raise NotFoundError("没有找到要标记的审核结果")
+    
+    marked_ids = []
+    not_found_ids = []
+    modified_count = 0
+    
+    # 检查哪些ID存在
+    found_ids = {str(result.id) for result in results}
+    for result_id in result_ids:
+        if result_id not in found_ids:
+            not_found_ids.append(result_id)
+    
+    # 批量处理
+    for result in results:
+        try:
+            modified_fields = []
+            
+            # 应用统一修改
+            if violation_result is not None and violation_result != result.violation_result:
+                result.violation_result = violation_result
+                modified_fields.append("violation_result")
+            
+            if confidence_score is not None and confidence_score != result.confidence_score:
+                result.confidence_score = confidence_score
+                modified_fields.append("confidence_score")
+            
+            # 构建批量操作的备注
+            batch_comment = review_comment or ""
+            if modified_fields:
+                batch_modification = f"批量修改: {', '.join(modified_fields)}"
+                batch_comment = f"{batch_comment}\n[批量操作] {batch_modification}" if batch_comment else f"[批量操作] {batch_modification}"
+            
+            # 标记复审
+            result.mark_reviewed(
+                reviewer_id=reviewer_id,
+                result=review_result,
+                comment=batch_comment
+            )
+            
+            result.updated_at = datetime.utcnow()
+            marked_ids.append(str(result.id))
+            
+            if modified_fields:
+                modified_count += 1
+                
+        except Exception as e:
+            logger.error(f"批量标记结果 {result.id} 失败: {e}")
+    
+    db.commit()
+    
+    # 记录批量操作日志
+    logger.info(f"用户 {reviewer_id} 批量标记 {len(marked_ids)} 个结果: {review_result}" + 
+               (f", 修改了 {modified_count} 个结果" if modified_count > 0 else ""))
+    
+    return APIResponse.success(
+        data={
+            "marked_count": len(marked_ids),
+            "marked_ids": marked_ids,
+            "not_found_ids": not_found_ids,
+            "modified_count": modified_count,
+            "total_requested": len(result_ids)
+        },
+        message=f"批量标记完成，成功标记 {len(marked_ids)} 个结果" + 
+                (f"，修改了 {modified_count} 个结果" if modified_count > 0 else "")
+    )
+
+
+@router.get("/{result_id}/history", summary="获取结果修改历史")
+async def get_result_history(
+    result_id: str = Path(..., description="结果ID"),
+    db: Session = Depends(get_db)
+):
+    """
+    获取审核结果的修改历史记录
+    
+    从复审备注中解析修改历史，用于审计和追踪
     """
     result = db.query(ReviewResult).filter(
         ReviewResult.id == result_id
@@ -343,19 +562,39 @@ async def mark_result(
     if not result:
         raise NotFoundError(f"审核结果不存在: {result_id}")
     
-    # 标记为已复审
-    result.mark_reviewed(
-        reviewer_id=request.reviewer_id,
-        result=request.review_result,
-        comment=request.review_comment
-    )
-    
-    db.commit()
-    db.refresh(result)
+    # 解析修改历史
+    history = []
+    if result.review_comment:
+        
+        # 解析系统记录的修改信息
+        system_records = re.findall(r'\[系统记录\] (.+?)(?=\n|\[|$)', result.review_comment)
+        batch_records = re.findall(r'\[批量操作\] (.+?)(?=\n|\[|$)', result.review_comment)
+        
+        for record in system_records:
+            history.append({
+                "type": "individual_modification",
+                "description": record,
+                "timestamp": result.review_time.isoformat() if result.review_time else None
+            })
+        
+        for record in batch_records:
+            history.append({
+                "type": "batch_modification", 
+                "description": record,
+                "timestamp": result.review_time.isoformat() if result.review_time else None
+            })
     
     return APIResponse.success(
-        data=result.to_dict(),
-        message="审核结果标记成功"
+        data={
+            "result_id": result_id,
+            "current_values": result.to_dict(),
+            "modification_history": history,
+            "is_reviewed": result.is_reviewed,
+            "reviewer_id": result.reviewer_id,
+            "review_result": result.review_result,
+            "last_modified": result.updated_at.isoformat() if result.updated_at else None
+        },
+        message="修改历史获取成功"
     )
 
 
@@ -394,7 +633,7 @@ async def delete_result(
     db.commit()
     
     # 更新文件的违规统计
-    from app.services.file_service import FileService
+    
     file_service = FileService(db)
     try:
         file_service.update_file_violation_count(file_id)
@@ -455,7 +694,7 @@ async def batch_delete_results(
     db.commit()
     
     # 更新受影响文件的统计
-    from app.services.file_service import FileService
+    
     file_service = FileService(db)
     for file_id in affected_files:
         try:
@@ -512,7 +751,7 @@ async def delete_file_all_results(
     db.commit()
     
     # 更新文件统计
-    from app.services.file_service import FileService
+    
     file_service = FileService(db)
     try:
         file_service.update_file_violation_count(file_id)
@@ -547,7 +786,7 @@ async def delete_task_all_results(
         raise ValidationError("删除任务所有结果需要确认，请设置confirm=true")
     
     # 检查任务是否存在
-    from app.services.task_service import TaskService
+    
     task_service = TaskService(db)
     task = task_service.get_task_by_id(task_id)
     
@@ -580,7 +819,7 @@ async def delete_task_all_results(
     db.commit()
     
     # 更新所有受影响文件的统计
-    from app.services.file_service import FileService
+    
     file_service = FileService(db)
     for file_id in affected_file_ids:
         try:

@@ -5,7 +5,7 @@
 
 from typing import List, Dict, Optional, Tuple
 from sqlalchemy.orm import Session
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 from loguru import logger
 from app.models.file import ReviewFile, FileType, FileStatus
@@ -387,7 +387,6 @@ class FileService:
         Returns:
             清理的文件数量
         """
-        from datetime import timedelta
         
         cutoff_time = datetime.utcnow() - timedelta(hours=hours)
         

@@ -10,6 +10,8 @@ from contextlib import asynccontextmanager
 import uvicorn
 from loguru import logger
 import sys
+import traceback
+import time
 
 from app.config import get_settings, ensure_upload_dir
 from app.database import init_database, health_check
@@ -203,7 +205,7 @@ def register_exception_handlers(app: FastAPI):
         # 开发环境返回详细错误信息
         settings = get_settings()
         if settings.DEBUG:
-            import traceback
+           
             error_detail = traceback.format_exc()
         else:
             error_detail = "服务器内部错误"
@@ -220,7 +222,6 @@ def register_exception_handlers(app: FastAPI):
     @app.middleware("http")
     async def request_logging_middleware(request: Request, call_next):
         """请求日志中间件"""
-        import time
         
         start_time = time.time()
         

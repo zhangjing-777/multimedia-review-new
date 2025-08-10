@@ -11,6 +11,7 @@ from loguru import logger
 from app.database import get_db
 from app.services.task_service import TaskService
 from app.services.queue_service import QueueService
+from app.services.file_service import FileService
 from app.models.task import TaskStatus, StrategyType
 from app.utils.response import APIResponse, paginated_response
 
@@ -328,7 +329,6 @@ async def get_task_files(
     """
     获取任务关联的文件列表
     """
-    from app.services.file_service import FileService
     
     file_service = FileService(db)
     

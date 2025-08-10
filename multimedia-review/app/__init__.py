@@ -14,7 +14,7 @@ from .database import get_db, init_database
 # 导出常用类型
 from .models import (
     ReviewTask, ReviewFile, ReviewResult,
-    TaskStatus, FileStatus, ViolationType
+    TaskStatus, FileStatus, ViolationResult
 )
 
 # 包级别的配置
@@ -27,5 +27,5 @@ __all__ = [
     "ReviewResult",
     "TaskStatus",
     "FileStatus",
-    "ViolationType",
+    "ViolationResult",
 ]

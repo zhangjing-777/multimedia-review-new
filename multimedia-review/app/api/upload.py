@@ -149,7 +149,7 @@ async def upload_batch_files(
                 continue
             
             if file.filename:
-                from pathlib import Path
+                
                 ext = Path(file.filename).suffix.lower().lstrip('.')
                 if ext not in settings.ALLOWED_EXTENSIONS:
                     failed_files.append({

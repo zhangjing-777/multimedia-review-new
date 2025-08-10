@@ -12,6 +12,7 @@ import enum
 import os
 
 from app.database import Base
+from app.config import get_settings
 
 
 class FileType(str, enum.Enum):
@@ -229,7 +230,7 @@ class ReviewFile(Base):
     
     def get_relative_path(self):
         """获取相对路径"""
-        from app.config import get_settings
+        
         settings = get_settings()
         
         if self.file_path and self.file_path.startswith(settings.UPLOAD_DIR):

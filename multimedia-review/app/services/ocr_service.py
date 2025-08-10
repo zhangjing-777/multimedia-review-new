@@ -9,6 +9,10 @@ import base64
 from typing import List, Dict, Optional, Tuple
 from pathlib import Path
 import asyncio
+from pdf2image import convert_from_path
+import uuid
+import os
+import re
 from loguru import logger
 from app.config import get_settings
 from app.utils.file_utils import FileUtils
@@ -108,7 +112,6 @@ class OCRService:
                 try:
                     result_data = json.loads(content)
                 except json.JSONDecodeError:
-                    import re
                     json_match = re.search(r'\{.*\}', content, re.DOTALL)
                     if json_match:
                         result_data = json.loads(json_match.group())
@@ -348,8 +351,6 @@ class OCRService:
     def _save_image_block(self, image_data: str, source_path: str) -> str:
         """保存提取的图像块"""
         try:
-            import uuid
-            import os
             
             # 解码base64图像数据
             image_bytes = base64.b64decode(image_data)
@@ -376,9 +377,6 @@ class OCRService:
     async def _convert_document_to_images(self, doc_path: str) -> List[str]:
         """将文档转换为图片列表"""
         try:
-            from pdf2image import convert_from_path
-            import uuid
-            import os
             
             # 创建临时目录
             temp_dir = os.path.join(
