@@ -5,6 +5,7 @@
 
 from datetime import datetime
 import re
+import os
 from typing import List, Optional, Dict
 from fastapi import APIRouter, Depends, Query, Path, Body
 from pydantic import BaseModel, Field, ValidationError
@@ -542,6 +543,130 @@ async def batch_mark_results(
         },
         message=f"批量标记完成，成功标记 {len(marked_ids)} 个结果" + 
                 (f"，修改了 {modified_count} 个结果" if modified_count > 0 else "")
+    )
+
+
+@router.get("/{result_id}/frame-info", summary="获取审核结果的完整帧信息")
+async def get_result_frame_info(
+    result_id: str = Path(..., description="结果ID"),
+    db: Session = Depends(get_db)
+):
+    """
+    获取审核结果对应的完整视频帧信息
+    
+    返回违规结果与视频帧的精确对应关系
+    """
+    result = db.query(ReviewResult).filter(
+        ReviewResult.id == result_id
+    ).first()
+    
+    if not result:
+        raise NotFoundError(f"审核结果不存在: {result_id}")
+    
+    # 检查是否有帧信息
+    if not result.position:
+        raise ValidationError("该审核结果不包含帧信息")
+    
+    frame_info = result.position
+    
+    # 验证帧文件是否存在
+    frame_exists = False
+    if "frame_path" in frame_info:
+        frame_exists = os.path.exists(frame_info["frame_path"])
+    
+    response_data = {
+        "result_id": result_id,
+        "violation_result": result.violation_result.value,
+        "confidence_score": result.confidence_score,
+        "evidence": result.evidence,
+        
+        # 完整的帧对应信息
+        "frame_info": {
+            "frame_number": result.page_number,
+            "timestamp": result.timestamp,
+            "frame_metadata": frame_info,
+            "frame_exists": frame_exists,
+            
+            # API访问路径
+            "frame_download_url": f"/api/v1/results/{result_id}/frame",
+            "frame_view_url": f"/api/v1/upload/video/{result.file_id}/frame/{frame_info.get('filename', '')}"
+        },
+        
+        # 文件信息
+        "file_info": {
+            "file_id": str(result.file_id),
+            "original_video": frame_info.get("original_video", ""),
+        }
+    }
+    
+    return APIResponse.success(
+        data=response_data,
+        message="帧信息获取成功"
+    )
+
+
+@router.get("/file/{file_id}/frame-mapping", summary="获取文件的帧-结果映射关系")
+async def get_file_frame_mapping(
+    file_id: str = Path(..., description="文件ID"),
+    db: Session = Depends(get_db)
+):
+    """
+    获取视频文件的所有帧与审核结果的对应关系
+    
+    返回每一帧对应的所有审核结果
+    """
+    # 获取文件的所有审核结果
+    results = db.query(ReviewResult).filter(
+        ReviewResult.file_id == file_id
+    ).order_by(ReviewResult.timestamp.asc()).all()
+    
+    if not results:
+        return APIResponse.success(
+            data={"file_id": file_id, "frame_mappings": []},
+            message="该文件没有审核结果"
+        )
+    
+    # 按帧组织结果
+    frame_mappings = {}
+    
+    for result in results:
+        frame_number = result.page_number or 0
+        timestamp = result.timestamp or 0
+        
+        frame_key = f"frame_{frame_number}"
+        
+        if frame_key not in frame_mappings:
+            frame_info = result.position or {}
+            frame_mappings[frame_key] = {
+                "frame_number": frame_number,
+                "timestamp": timestamp,
+                "frame_metadata": frame_info,
+                "violations": []
+            }
+        
+        # 添加违规结果
+        violation_info = {
+            "result_id": str(result.id),
+            "violation_result": result.violation_result.value,
+            "confidence_score": result.confidence_score,
+            "evidence": result.evidence,
+            "source_type": result.source_type.value,
+            "is_reviewed": result.is_reviewed
+        }
+        
+        frame_mappings[frame_key]["violations"].append(violation_info)
+    
+    # 转换为列表并排序
+    sorted_mappings = sorted(frame_mappings.values(), key=lambda x: x["timestamp"])
+    
+    return APIResponse.success(
+        data={
+            "file_id": file_id,
+            "total_frames": len(sorted_mappings),
+            "total_violations": len(results),
+            "frame_mappings": sorted_mappings
+        },
+        message="帧映射关系获取成功"
     )
 
 

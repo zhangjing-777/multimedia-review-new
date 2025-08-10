@@ -22,6 +22,7 @@ from app.models.file import FileType, FileStatus, ReviewFile
 from app.utils.response import APIResponse, ValidationError
 from app.config import get_settings
 from app.models.task import ReviewTask
+from app.models.result import ReviewResult, ViolationResult
 
 # 创建路由器
 router = APIRouter()
@@ -342,6 +343,81 @@ async def get_queue_status():
         message="队列状态获取成功"
     )
 
+@router.get("/video/{file_id}/frames-with-results", summary="获取视频帧及其审核结果")
+async def get_video_frames_with_results(
+    file_id: str,
+    page: int = Query(1, ge=1, description="页码"),
+    size: int = Query(10, ge=1, le=50, description="每页帧数"),
+    has_violations: Optional[bool] = Query(None, description="只显示有违规的帧"),
+    db: Session = Depends(get_db)
+):
+    """
+    获取视频文件的帧列表及其对应的审核结果
+    
+    支持分页浏览和过滤
+    """
+    file_service = FileService(db)
+    
+    # 获取文件信息
+    file_obj = file_service.get_file_by_id(file_id)
+    
+    if file_obj.file_type != FileType.VIDEO:
+        raise ValidationError("只能获取视频文件的帧")
+    
+    # 获取所有审核结果
+    query = db.query(ReviewResult).filter(ReviewResult.file_id == file_id)
+    
+    if has_violations:
+        query = query.filter(ReviewResult.violation_result == ViolationResult.NON_COMPLIANT)
+    
+    # 按时间戳排序
+    results = query.order_by(ReviewResult.timestamp.asc()).all()
+    
+    # 按帧组织数据
+    frames_data = {}
+    for result in results:
+        frame_key = result.page_number or 0
+        
+        if frame_key not in frames_data:
+            frame_info = result.position or {}
+            frames_data[frame_key] = {
+                "frame_number": frame_key,
+                "timestamp": result.timestamp,
+                "frame_info": frame_info,
+                "violations": [],
+                "has_violations": False
+            }
+        
+        frames_data[frame_key]["violations"].append({
+            "result_id": str(result.id),
+            "violation_result": result.violation_result.value,
+            "confidence_score": result.confidence_score,
+            "evidence": result.evidence
+        })
+        
+        if result.violation_result == ViolationResult.NON_COMPLIANT:
+            frames_data[frame_key]["has_violations"] = True
+    
+    # 转换为列表并分页
+    all_frames = sorted(frames_data.values(), key=lambda x: x["timestamp"])
+    total = len(all_frames)
+    
+    start_idx = (page - 1) * size
+    end_idx = start_idx + size
+    page_frames = all_frames[start_idx:end_idx]
+    
+    # 添加下载链接
+    for frame in page_frames:
+        if frame["frame_info"].get("filename"):
+            frame["download_url"] = f"/api/v1/upload/video/{file_id}/frame/{frame['frame_info']['filename']}"
+    
+    return APIResponse.paginated(
+        items=page_frames,
+        total=total,
+        page=page,
+        size=size,
+        message="视频帧及审核结果获取成功"
+    )
 
 @router.get("/files", summary="查询所有文件列表")
 async def get_all_files(

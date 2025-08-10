@@ -434,10 +434,8 @@ def _process_text_file(file_obj, db: Session) -> List[Dict]:
         db.rollback()
         return []
 
-
-# 修改 _process_video_file 函数 - 确保数据库提交
 def _process_video_file(file_obj, db: Session) -> List[Dict]:
-    """处理视频文件（修复版）"""
+    """处理视频文件 - 确保审核结果与视频帧一一对应"""
     try:
         # 获取任务信息
         task = db.query(ReviewTask).filter(ReviewTask.id == file_obj.task_id).first()
@@ -457,7 +455,7 @@ def _process_video_file(file_obj, db: Session) -> List[Dict]:
             return []
         
         # 提取视频帧
-        frame_paths = _extract_video_frames_fixed(file_obj.file_path, frame_interval)
+        frame_paths = _extract_video_frames_with_metadata(file_obj.file_path, frame_interval, str(file_obj.id))
         
         if not frame_paths:
             logger.warning("没有成功提取到视频帧")
@@ -467,29 +465,47 @@ def _process_video_file(file_obj, db: Session) -> List[Dict]:
         
         all_violations = []
         
-        try:
-            # 处理每一帧
-            for i, frame_path in enumerate(frame_paths):
-                frame_time = i * frame_interval
+        # 处理每一帧 - 建立精确对应关系
+        for frame_info in frame_paths:
+            frame_path = frame_info["path"]
+            frame_number = frame_info["frame_number"]
+            timestamp = frame_info["timestamp"]
+            relative_path = frame_info["relative_path"]
+            
+            logger.info(f"处理第 {frame_number} 帧, 时间: {timestamp}s, 路径: {frame_path}")
+            
+            # 处理单帧
+            frame_violations = _process_image_content_sync(
+                frame_path, strategy_type, strategy_contents
+            )
+            
+            # 为每个违规结果建立精确的帧对应关系
+            for violation in frame_violations:
+                # 构建完整的帧信息
+                frame_metadata = {
+                    "timestamp": timestamp,
+                    "frame_number": frame_number,
+                    "frame_path": frame_path,
+                    "relative_path": relative_path,  # 用于API访问
+                    "file_id": str(file_obj.id),
+                    "original_video": file_obj.original_name
+                }
                 
-                logger.info(f"处理第 {i+1}/{len(frame_paths)} 帧, 时间: {frame_time}s")
+                # 将帧信息添加到违规结果中
+                violation["timestamp"] = timestamp
+                violation["position"] = frame_metadata
+                violation["frame_metadata"] = frame_metadata  # 额外的元数据字段
                 
-                # 处理单帧
-                frame_violations = _process_image_content_sync(
-                    frame_path, strategy_type, strategy_contents
+                # 保存到数据库时包含完整的帧信息
+                _save_violation_result_with_frame_info(
+                    violation, 
+                    str(file_obj.id), 
+                    frame_number, 
+                    db, 
+                    timestamp,
+                    frame_metadata
                 )
-                
-                # 添加时间戳信息并保存
-                for violation in frame_violations:
-                    violation["timestamp"] = frame_time
-                    violation["position"] = {"timestamp": frame_time, "frame_number": i+1}
-                    # 保存到数据库
-                    _save_violation_result(violation, str(file_obj.id), None, db, frame_time)
-                    all_violations.append(violation)
-        
-        finally:
-            # 清理临时帧文件
-            _cleanup_temp_files(frame_paths)
+                all_violations.append(violation)
         
         # 确保数据库提交
         try:
@@ -502,13 +518,141 @@ def _process_video_file(file_obj, db: Session) -> List[Dict]:
         # 更新统计
         _update_file_ocr_stats(file_obj, len(all_violations), db)
         
-        logger.info(f"视频处理完成，发现 {len(all_violations)} 个检测结果")
+        logger.info(f"视频处理完成，发现 {len(all_violations)} 个检测结果，已建立帧对应关系")
         return all_violations
     
     except Exception as e:
         logger.error(f"视频处理失败: {e}", exc_info=True)
         db.rollback()
         return []
+
+
+def _extract_video_frames_with_metadata(video_path: str, interval: int = 5, file_id: str = None, max_frames: int = 20) -> List[Dict]:
+    """提取视频帧并返回详细元数据"""
+    try:
+        frame_infos = []
+        
+        # 打开视频
+        cap = cv2.VideoCapture(video_path)
+        if not cap.isOpened():
+            logger.error(f"无法打开视频文件: {video_path}")
+            return []
+        
+        fps = cap.get(cv2.CAP_PROP_FPS)
+        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        duration = total_frames / fps if fps > 0 else 0
+        
+        if fps <= 0:
+            logger.error("无法获取视频帧率")
+            cap.release()
+            return []
+        
+        frame_interval = int(fps * interval)  # 间隔帧数
+        
+        # 创建帧存储目录
+        from app.config import get_settings
+        settings = get_settings()
+        frames_dir = os.path.join(settings.UPLOAD_DIR, "video_frames", file_id or "unknown")
+        os.makedirs(frames_dir, exist_ok=True)
+        
+        frame_num = 0
+        saved_frames = 0
+        
+        logger.info(f"视频信息: FPS={fps}, 总帧数={total_frames}, 时长={duration:.1f}s")
+        logger.info(f"提取参数: 间隔={interval}s({frame_interval}帧), 最大帧数={max_frames}")
+        
+        while saved_frames < max_frames and frame_num < total_frames:
+            ret, frame = cap.read()
+            if not ret:
+                break
+            
+            # 按间隔保存帧
+            if frame_num % frame_interval == 0:
+                frame_time = frame_num / fps
+                
+                # 生成标准化的文件名
+                frame_filename = f"frame_{saved_frames+1:04d}_time_{frame_time:.1f}s_pos_{frame_num:06d}.jpg"
+                frame_path = os.path.join(frames_dir, frame_filename)
+                
+                if cv2.imwrite(frame_path, frame):
+                    # 构建帧信息对象
+                    frame_info = {
+                        "frame_number": saved_frames + 1,  # 从1开始的帧序号
+                        "video_frame_position": frame_num,  # 在视频中的实际帧位置
+                        "timestamp": round(frame_time, 1),  # 时间戳（秒）
+                        "path": frame_path,  # 完整路径
+                        "filename": frame_filename,  # 文件名
+                        "relative_path": f"video_frames/{file_id}/{frame_filename}",  # 相对路径
+                        "file_size": os.path.getsize(frame_path) if os.path.exists(frame_path) else 0
+                    }
+                    
+                    frame_infos.append(frame_info)
+                    saved_frames += 1
+                    logger.info(f"保存帧 {saved_frames}: {frame_filename} (时间: {frame_time:.1f}s)")
+                else:
+                    logger.warning(f"保存帧失败: {frame_path}")
+            
+            frame_num += 1
+        
+        cap.release()
+        
+        logger.info(f"视频帧提取完成，共提取 {len(frame_infos)} 帧")
+        return frame_infos
+    
+    except Exception as e:
+        logger.error(f"视频帧提取失败: {e}", exc_info=True)
+        return []
+
+
+def _save_violation_result_with_frame_info(
+    violation: Dict, 
+    file_id: str, 
+    frame_number: int,
+    db: Session,
+    timestamp: float,
+    frame_metadata: Dict
+):
+    """保存违规结果并建立与帧的精确对应关系"""
+    try:
+        # 获取检测结果
+        violation_result_str = violation.get("violation_result", "不确定")
+        violation_result = _get_violation_result_enum(violation_result_str)
+        
+        # 创建审核结果对象
+        result = ReviewResult(
+            file_id=file_id,
+            violation_result=violation_result,
+            source_type=SourceType(violation.get("source_type", "visual")),
+            confidence_score=float(violation.get("confidence_score", 0.0)),
+            evidence=violation.get("evidence", ""),
+            evidence_text=violation.get("evidence_text"),
+            
+            # 关键：保存完整的帧关联信息
+            position=frame_metadata,  # 完整的帧元数据
+            page_number=frame_number,  # 帧序号
+            timestamp=timestamp,  # 时间戳
+            
+            model_name=violation.get("model_name"),
+            model_version=violation.get("model_version"),
+            raw_response=violation.get("raw_response")
+        )
+        
+        # 保存到数据库
+        db.add(result)
+        
+        logger.info(f"保存违规结果: 帧{frame_number}, 时间{timestamp}s, 结果:{violation_result.value}")
+        
+        return result
+    
+    except Exception as e:
+        logger.error(f"保存违规结果失败: {e}")
+        if db:
+            try:
+                db.rollback()
+            except Exception as rollback_error:
+                logger.error(f"回滚事务失败: {rollback_error}")
+
+
 
 
 # 修复 _process_image_file 函数的保存逻辑
