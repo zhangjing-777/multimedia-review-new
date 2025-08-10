@@ -1,0 +1,533 @@
+2025-08-09 17:00:24 | INFO     | app.main:lifespan:26 | 🚀 应用启动中...
+2025-08-09 17:00:24 | INFO     | app.main:lifespan:31 | ✅ 上传目录初始化完成
+2025-08-09 17:00:24 | INFO     | app.database:init_database:107 | ✅ 数据库模型加载完成
+2025-08-09 17:00:24 | INFO     | app.main:lifespan:35 | ✅ 数据库初始化完成
+2025-08-09 17:00:24 | INFO     | app.database:check_database_connection:117 | ⚠️ 跳过数据库连接检查
+2025-08-09 17:00:24 | INFO     | app.database:check_redis_connection:138 | ✅ Redis连接正常
+2025-08-09 17:00:24 | INFO     | app.main:lifespan:40 | ✅ 依赖服务连接正常
+2025-08-09 17:00:24 | INFO     | app.main:lifespan:44 | 🎉 应用启动完成
+2025-08-09 17:00:52 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/docs
+2025-08-09 17:00:52 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/docs - 状态码: 200 - 耗时: 0.002s
+2025-08-09 17:00:53 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/openapi.json
+2025-08-09 17:00:53 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/openapi.json - 状态码: 200 - 耗时: 0.035s
+2025-08-09 17:01:04 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/docs
+2025-08-09 17:01:04 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/docs - 状态码: 200 - 耗时: 0.003s
+2025-08-09 17:01:04 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/openapi.json
+2025-08-09 17:01:04 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/openapi.json - 状态码: 200 - 耗时: 0.002s
+2025-08-09 17:02:01 | INFO     | app.main:request_logging_middleware:228 | 📥 POST http://188.245.175.156:8208/api/v1/tasks/
+2025-08-09 17:02:01 | WARNING  | app.database:patched_get_server_version_info:27 | 检测到openGauss，使用PostgreSQL 14.0兼容模式
+2025-08-09 17:02:01 | INFO     | app.main:request_logging_middleware:237 | 📤 POST http://188.245.175.156:8208/api/v1/tasks/ - 状态码: 200 - 耗时: 0.129s
+2025-08-09 17:02:09 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/tasks/?page=1&size=20
+2025-08-09 17:02:09 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/tasks/?page=1&size=20 - 状态码: 200 - 耗时: 0.034s
+2025-08-09 17:02:27 | INFO     | app.main:request_logging_middleware:228 | 📥 POST http://188.245.175.156:8208/api/v1/upload/single
+2025-08-09 17:02:27 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-09 17:02:27 | WARNING  | app.main:http_exception_handler:180 | HTTP异常: 400 - 文件上传失败: (psycopg2.errors.InvalidTextRepresentation) invalid input syntax for uuid: "4c228eb4-5879-434d-9ca6-75643bc6687"
+LINE 3: WHERE review_tasks.id = '4c228eb4-5879-434d-9ca6-75643bc6687...
+                                ^
+
+[SQL: SELECT review_tasks.id AS review_tasks_id, review_tasks.name AS review_tasks_name, review_tasks.description AS review_tasks_description, review_tasks.strategy_type AS review_tasks_strategy_type, review_tasks.strategy_contents AS review_tasks_strategy_contents, review_tasks.video_frame_interval AS review_tasks_video_frame_interval, review_tasks.status AS review_tasks_status, review_tasks.progress AS review_tasks_progress, review_tasks.error_message AS review_tasks_error_message, review_tasks.total_files AS review_tasks_total_files, review_tasks.processed_files AS review_tasks_processed_files, review_tasks.violation_count AS review_tasks_violation_count, review_tasks.creator_id AS review_tasks_creator_id, review_tasks.created_at AS review_tasks_created_at, review_tasks.updated_at AS review_tasks_updated_at, review_tasks.started_at AS review_tasks_started_at, review_tasks.completed_at AS review_tasks_completed_at 
+FROM review_tasks 
+WHERE review_tasks.id = %(id_1)s::UUID 
+ LIMIT %(param_1)s]
+[parameters: {'id_1': '4c228eb4-5879-434d-9ca6-75643bc6687', 'param_1': 1}]
+(Background on this error at: https://sqlalche.me/e/20/9h9h)
+2025-08-09 17:02:27 | INFO     | app.main:request_logging_middleware:237 | 📤 POST http://188.245.175.156:8208/api/v1/upload/single - 状态码: 400 - 耗时: 0.099s
+2025-08-09 17:02:49 | INFO     | app.main:request_logging_middleware:228 | 📥 POST http://188.245.175.156:8208/api/v1/upload/single
+2025-08-09 17:02:49 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-09 17:02:49 | WARNING  | app.main:http_exception_handler:180 | HTTP异常: 400 - 文件上传失败: (psycopg2.errors.InvalidTextRepresentation) invalid input syntax for uuid: "4c228eb4-5879-434d-9ca6-75643bc6687"
+LINE 3: WHERE review_tasks.id = '4c228eb4-5879-434d-9ca6-75643bc6687...
+                                ^
+
+[SQL: SELECT review_tasks.id AS review_tasks_id, review_tasks.name AS review_tasks_name, review_tasks.description AS review_tasks_description, review_tasks.strategy_type AS review_tasks_strategy_type, review_tasks.strategy_contents AS review_tasks_strategy_contents, review_tasks.video_frame_interval AS review_tasks_video_frame_interval, review_tasks.status AS review_tasks_status, review_tasks.progress AS review_tasks_progress, review_tasks.error_message AS review_tasks_error_message, review_tasks.total_files AS review_tasks_total_files, review_tasks.processed_files AS review_tasks_processed_files, review_tasks.violation_count AS review_tasks_violation_count, review_tasks.creator_id AS review_tasks_creator_id, review_tasks.created_at AS review_tasks_created_at, review_tasks.updated_at AS review_tasks_updated_at, review_tasks.started_at AS review_tasks_started_at, review_tasks.completed_at AS review_tasks_completed_at 
+FROM review_tasks 
+WHERE review_tasks.id = %(id_1)s::UUID 
+ LIMIT %(param_1)s]
+[parameters: {'id_1': '4c228eb4-5879-434d-9ca6-75643bc6687', 'param_1': 1}]
+(Background on this error at: https://sqlalche.me/e/20/9h9h)
+2025-08-09 17:02:49 | INFO     | app.main:request_logging_middleware:237 | 📤 POST http://188.245.175.156:8208/api/v1/upload/single - 状态码: 400 - 耗时: 0.129s
+2025-08-09 17:03:11 | INFO     | app.main:request_logging_middleware:228 | 📥 POST http://188.245.175.156:8208/api/v1/upload/single
+2025-08-09 17:03:11 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-09 17:03:12 | WARNING  | app.main:http_exception_handler:180 | HTTP异常: 400 - 文件上传失败: (psycopg2.errors.InvalidTextRepresentation) invalid input syntax for uuid: "4c228eb4-5879-434d-9ca6-75643bc6687"
+LINE 3: WHERE review_tasks.id = '4c228eb4-5879-434d-9ca6-75643bc6687...
+                                ^
+
+[SQL: SELECT review_tasks.id AS review_tasks_id, review_tasks.name AS review_tasks_name, review_tasks.description AS review_tasks_description, review_tasks.strategy_type AS review_tasks_strategy_type, review_tasks.strategy_contents AS review_tasks_strategy_contents, review_tasks.video_frame_interval AS review_tasks_video_frame_interval, review_tasks.status AS review_tasks_status, review_tasks.progress AS review_tasks_progress, review_tasks.error_message AS review_tasks_error_message, review_tasks.total_files AS review_tasks_total_files, review_tasks.processed_files AS review_tasks_processed_files, review_tasks.violation_count AS review_tasks_violation_count, review_tasks.creator_id AS review_tasks_creator_id, review_tasks.created_at AS review_tasks_created_at, review_tasks.updated_at AS review_tasks_updated_at, review_tasks.started_at AS review_tasks_started_at, review_tasks.completed_at AS review_tasks_completed_at 
+FROM review_tasks 
+WHERE review_tasks.id = %(id_1)s::UUID 
+ LIMIT %(param_1)s]
+[parameters: {'id_1': '4c228eb4-5879-434d-9ca6-75643bc6687', 'param_1': 1}]
+(Background on this error at: https://sqlalche.me/e/20/9h9h)
+2025-08-09 17:03:12 | INFO     | app.main:request_logging_middleware:237 | 📤 POST http://188.245.175.156:8208/api/v1/upload/single - 状态码: 400 - 耗时: 0.202s
+2025-08-09 17:03:24 | INFO     | app.main:request_logging_middleware:228 | 📥 POST http://188.245.175.156:8208/api/v1/upload/single
+2025-08-09 17:03:24 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-09 17:03:24 | WARNING  | app.main:http_exception_handler:180 | HTTP异常: 400 - 文件上传失败: (psycopg2.errors.InvalidTextRepresentation) invalid input syntax for uuid: "4c228eb4-5879-434d-9ca6-75643bc6687"
+LINE 3: WHERE review_tasks.id = '4c228eb4-5879-434d-9ca6-75643bc6687...
+                                ^
+
+[SQL: SELECT review_tasks.id AS review_tasks_id, review_tasks.name AS review_tasks_name, review_tasks.description AS review_tasks_description, review_tasks.strategy_type AS review_tasks_strategy_type, review_tasks.strategy_contents AS review_tasks_strategy_contents, review_tasks.video_frame_interval AS review_tasks_video_frame_interval, review_tasks.status AS review_tasks_status, review_tasks.progress AS review_tasks_progress, review_tasks.error_message AS review_tasks_error_message, review_tasks.total_files AS review_tasks_total_files, review_tasks.processed_files AS review_tasks_processed_files, review_tasks.violation_count AS review_tasks_violation_count, review_tasks.creator_id AS review_tasks_creator_id, review_tasks.created_at AS review_tasks_created_at, review_tasks.updated_at AS review_tasks_updated_at, review_tasks.started_at AS review_tasks_started_at, review_tasks.completed_at AS review_tasks_completed_at 
+FROM review_tasks 
+WHERE review_tasks.id = %(id_1)s::UUID 
+ LIMIT %(param_1)s]
+[parameters: {'id_1': '4c228eb4-5879-434d-9ca6-75643bc6687', 'param_1': 1}]
+(Background on this error at: https://sqlalche.me/e/20/9h9h)
+2025-08-09 17:03:24 | INFO     | app.main:request_logging_middleware:237 | 📤 POST http://188.245.175.156:8208/api/v1/upload/single - 状态码: 400 - 耗时: 0.064s
+2025-08-09 17:04:56 | INFO     | app.main:request_logging_middleware:228 | 📥 POST http://188.245.175.156:8208/api/v1/upload/single
+2025-08-09 17:04:56 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-09 17:04:56 | INFO     | app.services.queue_service:add_file_to_queue:84 | 🚀 提交文件处理任务: 0a810629-c108-4c6d-8f29-1e7edcfbcea4
+2025-08-09 17:04:57 | INFO     | app.services.queue_service:add_file_to_queue:94 | ✅ 文件任务已提交，Celery任务ID: c1b15c0a-003f-4275-8504-80748f501ab1
+2025-08-09 17:04:57 | INFO     | app.main:request_logging_middleware:237 | 📤 POST http://188.245.175.156:8208/api/v1/upload/single - 状态码: 200 - 耗时: 0.497s
+2025-08-09 17:05:04 | INFO     | app.main:request_logging_middleware:228 | 📥 POST http://188.245.175.156:8208/api/v1/upload/single
+2025-08-09 17:05:05 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-09 17:05:05 | INFO     | app.services.queue_service:add_file_to_queue:84 | 🚀 提交文件处理任务: 631bcd8b-dfa5-4c43-8b69-6e9cae1eba7e
+2025-08-09 17:05:05 | INFO     | app.services.queue_service:add_file_to_queue:94 | ✅ 文件任务已提交，Celery任务ID: a7c41576-78a7-43c2-b4dc-ab8c4f6354e2
+2025-08-09 17:05:05 | INFO     | app.main:request_logging_middleware:237 | 📤 POST http://188.245.175.156:8208/api/v1/upload/single - 状态码: 200 - 耗时: 0.111s
+2025-08-09 17:05:16 | INFO     | app.main:request_logging_middleware:228 | 📥 POST http://188.245.175.156:8208/api/v1/tasks/4c228eb4-5879-434d-9ca6-75643bc6687a/start
+2025-08-09 17:05:16 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-09 17:05:16 | INFO     | app.api.task:start_task:203 | 任务启动结果: True
+2025-08-09 17:05:16 | INFO     | app.services.queue_service:add_task_to_queue:52 | 🚀 提交任务到 Celery: 4c228eb4-5879-434d-9ca6-75643bc6687a
+2025-08-09 17:05:16 | INFO     | app.services.queue_service:add_task_to_queue:61 | ✅ 任务已提交，Celery任务ID: 9303ea8a-82e1-41aa-b432-7c9ffe45b660
+2025-08-09 17:05:16 | INFO     | app.api.task:start_task:208 | 队列添加结果: True
+2025-08-09 17:05:18 | INFO     | app.api.task:start_task:212 | 队列状态: {'active_tasks': 1, 'reserved_tasks': 0, 'total_pending': 1, 'workers_online': 1, 'queue_info': '使用 Celery 原生队列管理'}
+2025-08-09 17:05:18 | INFO     | app.main:request_logging_middleware:237 | 📤 POST http://188.245.175.156:8208/api/v1/tasks/4c228eb4-5879-434d-9ca6-75643bc6687a/start - 状态码: 200 - 耗时: 2.118s
+2025-08-09 17:05:31 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/tasks/4c228eb4-5879-434d-9ca6-75643bc6687a/statistics
+2025-08-09 17:05:31 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/tasks/4c228eb4-5879-434d-9ca6-75643bc6687a/statistics - 状态码: 200 - 耗时: 0.030s
+2025-08-09 17:05:44 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/tasks/4c228eb4-5879-434d-9ca6-75643bc6687a/progress
+2025-08-09 17:05:44 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-09 17:05:44 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/tasks/4c228eb4-5879-434d-9ca6-75643bc6687a/progress - 状态码: 200 - 耗时: 0.024s
+2025-08-09 17:06:49 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/results/?page=1&size=20&task_id=4c228eb4-5879-434d-9ca6-75643bc6687a
+2025-08-09 17:06:49 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/results/?page=1&size=20&task_id=4c228eb4-5879-434d-9ca6-75643bc6687a - 状态码: 200 - 耗时: 0.051s
+2025-08-09 17:07:01 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/results/?page=1&size=20
+2025-08-09 17:07:01 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/results/?page=1&size=20 - 状态码: 200 - 耗时: 0.016s
+2025-08-09 17:08:08 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/results/?page=1&size=20&task_id=4c228eb4-5879-434d-9ca6-75643bc6687a
+2025-08-09 17:08:08 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/results/?page=1&size=20&task_id=4c228eb4-5879-434d-9ca6-75643bc6687a - 状态码: 200 - 耗时: 0.015s
+2025-08-09 17:08:54 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/results/?page=1&size=20
+2025-08-09 17:08:54 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/results/?page=1&size=20 - 状态码: 200 - 耗时: 0.034s
+2025-08-09 17:09:29 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/tasks/4c228eb4-5879-434d-9ca6-75643bc6687a/statistics
+2025-08-09 17:09:29 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/tasks/4c228eb4-5879-434d-9ca6-75643bc6687a/statistics - 状态码: 200 - 耗时: 0.014s
+2025-08-09 17:09:41 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/tasks/4c228eb4-5879-434d-9ca6-75643bc6687a/progress
+2025-08-09 17:09:41 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-09 17:09:41 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/tasks/4c228eb4-5879-434d-9ca6-75643bc6687a/progress - 状态码: 200 - 耗时: 0.018s
+2025-08-09 19:15:26 | INFO     | app.main:lifespan:53 | 👋 应用关闭中...
+2025-08-09 19:15:26 | INFO     | app.main:lifespan:54 | ✅ 应用关闭完成
+2025-08-09 20:56:11 | INFO     | app.main:lifespan:26 | 🚀 应用启动中...
+2025-08-09 20:56:11 | INFO     | app.main:lifespan:31 | ✅ 上传目录初始化完成
+2025-08-09 20:56:11 | INFO     | app.database:init_database:107 | ✅ 数据库模型加载完成
+2025-08-09 20:56:11 | INFO     | app.main:lifespan:35 | ✅ 数据库初始化完成
+2025-08-09 20:56:11 | INFO     | app.database:check_database_connection:117 | ⚠️ 跳过数据库连接检查
+2025-08-09 20:56:11 | INFO     | app.database:check_redis_connection:138 | ✅ Redis连接正常
+2025-08-09 20:56:11 | INFO     | app.main:lifespan:40 | ✅ 依赖服务连接正常
+2025-08-09 20:56:11 | INFO     | app.main:lifespan:44 | 🎉 应用启动完成
+2025-08-09 20:56:36 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/docs
+2025-08-09 20:56:36 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/docs - 状态码: 200 - 耗时: 0.003s
+2025-08-09 20:56:36 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/openapi.json
+2025-08-09 20:56:36 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/openapi.json - 状态码: 200 - 耗时: 0.035s
+2025-08-09 20:56:48 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/tasks/?page=1&size=20
+2025-08-09 20:56:48 | WARNING  | app.database:patched_get_server_version_info:27 | 检测到openGauss，使用PostgreSQL 14.0兼容模式
+2025-08-09 20:56:48 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/tasks/?page=1&size=20 - 状态码: 200 - 耗时: 0.130s
+2025-08-09 20:57:03 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/tasks/4c228eb4-5879-434d-9ca6-75643bc6687a
+2025-08-09 20:57:03 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/tasks/4c228eb4-5879-434d-9ca6-75643bc6687a - 状态码: 200 - 耗时: 0.012s
+2025-08-09 20:57:14 | INFO     | app.main:request_logging_middleware:228 | 📥 DELETE http://188.245.175.156:8208/api/v1/tasks/4c228eb4-5879-434d-9ca6-75643bc6687a
+2025-08-09 20:57:14 | INFO     | app.main:request_logging_middleware:237 | 📤 DELETE http://188.245.175.156:8208/api/v1/tasks/4c228eb4-5879-434d-9ca6-75643bc6687a - 状态码: 200 - 耗时: 0.066s
+2025-08-09 20:57:31 | INFO     | app.main:request_logging_middleware:228 | 📥 POST http://188.245.175.156:8208/api/v1/tasks/
+2025-08-09 20:57:31 | INFO     | app.main:request_logging_middleware:237 | 📤 POST http://188.245.175.156:8208/api/v1/tasks/ - 状态码: 200 - 耗时: 0.025s
+2025-08-09 20:57:39 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/tasks/420a996f-68a2-40c7-8bff-fce3738850be
+2025-08-09 20:57:39 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/tasks/420a996f-68a2-40c7-8bff-fce3738850be - 状态码: 200 - 耗时: 0.009s
+2025-08-09 20:57:48 | INFO     | app.main:request_logging_middleware:228 | 📥 POST http://188.245.175.156:8208/api/v1/tasks/420a996f-68a2-40c7-8bff-fce3738850be/start
+2025-08-09 20:57:48 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-09 20:57:48 | WARNING  | app.main:http_exception_handler:180 | HTTP异常: 400 - {'success': False, 'code': 400, 'message': '任务没有关联文件，无法开始处理', 'error_type': 'BusinessError', 'data': None, 'timestamp': 1754773068}
+2025-08-09 20:57:48 | INFO     | app.main:request_logging_middleware:237 | 📤 POST http://188.245.175.156:8208/api/v1/tasks/420a996f-68a2-40c7-8bff-fce3738850be/start - 状态码: 400 - 耗时: 0.026s
+2025-08-09 20:58:00 | INFO     | app.main:request_logging_middleware:228 | 📥 POST http://188.245.175.156:8208/api/v1/upload/single
+2025-08-09 20:58:01 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-09 20:58:01 | INFO     | app.services.queue_service:add_file_to_queue:84 | 🚀 提交文件处理任务: 05559f93-c7d4-4656-adb0-4f36d76d6ec2
+2025-08-09 20:58:01 | INFO     | app.services.queue_service:add_file_to_queue:94 | ✅ 文件任务已提交，Celery任务ID: be99991c-3940-46ee-8397-16faf573b0eb
+2025-08-09 20:58:01 | INFO     | app.main:request_logging_middleware:237 | 📤 POST http://188.245.175.156:8208/api/v1/upload/single - 状态码: 200 - 耗时: 0.566s
+2025-08-09 20:58:12 | INFO     | app.main:request_logging_middleware:228 | 📥 POST http://188.245.175.156:8208/api/v1/upload/single
+2025-08-09 20:58:12 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-09 20:58:12 | INFO     | app.services.queue_service:add_file_to_queue:84 | 🚀 提交文件处理任务: 707b30ef-5975-4868-90e0-e5371f760bc0
+2025-08-09 20:58:12 | INFO     | app.services.queue_service:add_file_to_queue:94 | ✅ 文件任务已提交，Celery任务ID: 39ca2a39-b84f-4833-8376-e0112e2ce731
+2025-08-09 20:58:12 | INFO     | app.main:request_logging_middleware:237 | 📤 POST http://188.245.175.156:8208/api/v1/upload/single - 状态码: 200 - 耗时: 0.145s
+2025-08-09 20:58:32 | INFO     | app.main:request_logging_middleware:228 | 📥 POST http://188.245.175.156:8208/api/v1/upload/single
+2025-08-09 20:58:32 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-09 20:58:32 | INFO     | app.services.queue_service:add_file_to_queue:84 | 🚀 提交文件处理任务: 1ece6917-3b9f-41d1-bf9d-745286016380
+2025-08-09 20:58:32 | INFO     | app.services.queue_service:add_file_to_queue:94 | ✅ 文件任务已提交，Celery任务ID: 5053fe46-cb3f-4231-88e4-4b25284f2c77
+2025-08-09 20:58:32 | INFO     | app.main:request_logging_middleware:237 | 📤 POST http://188.245.175.156:8208/api/v1/upload/single - 状态码: 200 - 耗时: 0.096s
+2025-08-09 20:58:45 | INFO     | app.main:request_logging_middleware:228 | 📥 POST http://188.245.175.156:8208/api/v1/tasks/420a996f-68a2-40c7-8bff-fce3738850be/start
+2025-08-09 20:58:45 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-09 20:58:45 | INFO     | app.api.task:start_task:203 | 任务启动结果: True
+2025-08-09 20:58:45 | INFO     | app.services.queue_service:add_task_to_queue:52 | 🚀 提交任务到 Celery: 420a996f-68a2-40c7-8bff-fce3738850be
+2025-08-09 20:58:45 | INFO     | app.services.queue_service:add_task_to_queue:61 | ✅ 任务已提交，Celery任务ID: dc01e1ed-6bf0-4a04-b672-801b3422e325
+2025-08-09 20:58:45 | INFO     | app.api.task:start_task:208 | 队列添加结果: True
+2025-08-09 20:58:48 | INFO     | app.api.task:start_task:212 | 队列状态: {'active_tasks': 2, 'reserved_tasks': 0, 'total_pending': 2, 'workers_online': 1, 'queue_info': '使用 Celery 原生队列管理'}
+2025-08-09 20:58:48 | INFO     | app.main:request_logging_middleware:237 | 📤 POST http://188.245.175.156:8208/api/v1/tasks/420a996f-68a2-40c7-8bff-fce3738850be/start - 状态码: 200 - 耗时: 2.106s
+2025-08-09 20:58:58 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/tasks/420a996f-68a2-40c7-8bff-fce3738850be/statistics
+2025-08-09 20:58:58 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/tasks/420a996f-68a2-40c7-8bff-fce3738850be/statistics - 状态码: 200 - 耗时: 0.029s
+2025-08-09 20:59:07 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/tasks/420a996f-68a2-40c7-8bff-fce3738850be/progress
+2025-08-09 20:59:07 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-09 20:59:07 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/tasks/420a996f-68a2-40c7-8bff-fce3738850be/progress - 状态码: 200 - 耗时: 0.016s
+2025-08-09 20:59:21 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/tasks/420a996f-68a2-40c7-8bff-fce3738850be/statistics
+2025-08-09 20:59:21 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/tasks/420a996f-68a2-40c7-8bff-fce3738850be/statistics - 状态码: 200 - 耗时: 0.024s
+2025-08-09 20:59:39 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/results/?page=1&size=20
+2025-08-09 20:59:39 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/results/?page=1&size=20 - 状态码: 200 - 耗时: 0.030s
+2025-08-09 21:01:09 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/results/?page=1&size=20
+2025-08-09 21:01:09 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/results/?page=1&size=20 - 状态码: 200 - 耗时: 0.010s
+2025-08-09 21:01:16 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/results/?page=1&size=20&task_id=420a996f-68a2-40c7-8bff-fce3738850be
+2025-08-09 21:01:16 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/results/?page=1&size=20&task_id=420a996f-68a2-40c7-8bff-fce3738850be - 状态码: 200 - 耗时: 0.033s
+2025-08-09 21:03:40 | INFO     | app.main:request_logging_middleware:228 | 📥 POST http://188.245.175.156:8208/api/v1/upload/single
+2025-08-09 21:03:40 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-09 21:03:40 | WARNING  | app.main:http_exception_handler:180 | HTTP异常: 400 - 文件上传失败: 文件已存在: 123.jpg
+2025-08-09 21:03:40 | INFO     | app.main:request_logging_middleware:237 | 📤 POST http://188.245.175.156:8208/api/v1/upload/single - 状态码: 400 - 耗时: 0.066s
+2025-08-09 21:04:21 | INFO     | app.main:request_logging_middleware:228 | 📥 POST http://188.245.175.156:8208/api/v1/upload/single
+2025-08-09 21:04:21 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-09 21:04:21 | INFO     | app.services.queue_service:add_file_to_queue:84 | 🚀 提交文件处理任务: d70ad9ca-c789-4b40-b777-c7e610f16697
+2025-08-09 21:04:21 | INFO     | app.services.queue_service:add_file_to_queue:94 | ✅ 文件任务已提交，Celery任务ID: 985d9168-42b5-45b9-b910-9f88542181bd
+2025-08-09 21:04:21 | INFO     | app.main:request_logging_middleware:237 | 📤 POST http://188.245.175.156:8208/api/v1/upload/single - 状态码: 200 - 耗时: 0.161s
+2025-08-09 21:04:29 | INFO     | app.main:request_logging_middleware:228 | 📥 POST http://188.245.175.156:8208/api/v1/tasks/420a996f-68a2-40c7-8bff-fce3738850be/start
+2025-08-09 21:04:29 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-09 21:04:29 | INFO     | app.api.task:start_task:203 | 任务启动结果: True
+2025-08-09 21:04:29 | INFO     | app.services.queue_service:add_task_to_queue:52 | 🚀 提交任务到 Celery: 420a996f-68a2-40c7-8bff-fce3738850be
+2025-08-09 21:04:29 | INFO     | app.services.queue_service:add_task_to_queue:61 | ✅ 任务已提交，Celery任务ID: 4a162c5d-4a0e-4ea8-a61e-6e197b5ade18
+2025-08-09 21:04:29 | INFO     | app.api.task:start_task:208 | 队列添加结果: True
+2025-08-09 21:04:31 | INFO     | app.api.task:start_task:212 | 队列状态: {'active_tasks': 2, 'reserved_tasks': 0, 'total_pending': 2, 'workers_online': 1, 'queue_info': '使用 Celery 原生队列管理'}
+2025-08-09 21:04:31 | INFO     | app.main:request_logging_middleware:237 | 📤 POST http://188.245.175.156:8208/api/v1/tasks/420a996f-68a2-40c7-8bff-fce3738850be/start - 状态码: 200 - 耗时: 2.061s
+2025-08-09 21:04:38 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/tasks/420a996f-68a2-40c7-8bff-fce3738850be/statistics
+2025-08-09 21:04:38 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/tasks/420a996f-68a2-40c7-8bff-fce3738850be/statistics - 状态码: 200 - 耗时: 0.015s
+2025-08-09 21:04:46 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/tasks/420a996f-68a2-40c7-8bff-fce3738850be/statistics
+2025-08-09 21:04:46 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/tasks/420a996f-68a2-40c7-8bff-fce3738850be/statistics - 状态码: 200 - 耗时: 0.020s
+2025-08-09 21:04:50 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/tasks/420a996f-68a2-40c7-8bff-fce3738850be/progress
+2025-08-09 21:04:50 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-09 21:04:50 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/tasks/420a996f-68a2-40c7-8bff-fce3738850be/progress - 状态码: 200 - 耗时: 0.011s
+2025-08-09 21:05:04 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/tasks/420a996f-68a2-40c7-8bff-fce3738850be/progress
+2025-08-09 21:05:04 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-09 21:05:04 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/tasks/420a996f-68a2-40c7-8bff-fce3738850be/progress - 状态码: 200 - 耗时: 0.010s
+2025-08-09 21:05:17 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/results/?page=1&size=20&task_id=420a996f-68a2-40c7-8bff-fce3738850be
+2025-08-09 21:05:17 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/results/?page=1&size=20&task_id=420a996f-68a2-40c7-8bff-fce3738850be - 状态码: 200 - 耗时: 0.014s
+2025-08-09 21:05:43 | INFO     | app.main:request_logging_middleware:228 | 📥 POST http://188.245.175.156:8208/api/v1/tasks/420a996f-68a2-40c7-8bff-fce3738850be/start
+2025-08-09 21:05:43 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-09 21:05:43 | INFO     | app.api.task:start_task:203 | 任务启动结果: True
+2025-08-09 21:05:43 | INFO     | app.services.queue_service:add_task_to_queue:52 | 🚀 提交任务到 Celery: 420a996f-68a2-40c7-8bff-fce3738850be
+2025-08-09 21:05:43 | INFO     | app.services.queue_service:add_task_to_queue:61 | ✅ 任务已提交，Celery任务ID: 64bb688c-c00a-4362-8127-0034a6454d25
+2025-08-09 21:05:43 | INFO     | app.api.task:start_task:208 | 队列添加结果: True
+2025-08-09 21:05:46 | INFO     | app.api.task:start_task:212 | 队列状态: {'active_tasks': 1, 'reserved_tasks': 0, 'total_pending': 1, 'workers_online': 1, 'queue_info': '使用 Celery 原生队列管理'}
+2025-08-09 21:05:46 | INFO     | app.main:request_logging_middleware:237 | 📤 POST http://188.245.175.156:8208/api/v1/tasks/420a996f-68a2-40c7-8bff-fce3738850be/start - 状态码: 200 - 耗时: 2.054s
+2025-08-09 21:05:52 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/tasks/420a996f-68a2-40c7-8bff-fce3738850be/statistics
+2025-08-09 21:05:52 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/tasks/420a996f-68a2-40c7-8bff-fce3738850be/statistics - 状态码: 200 - 耗时: 0.014s
+2025-08-09 21:05:57 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/tasks/420a996f-68a2-40c7-8bff-fce3738850be/progress
+2025-08-09 21:05:57 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-09 21:05:57 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/tasks/420a996f-68a2-40c7-8bff-fce3738850be/progress - 状态码: 200 - 耗时: 0.019s
+2025-08-09 21:06:21 | INFO     | app.main:request_logging_middleware:228 | 📥 POST http://188.245.175.156:8208/api/v1/tasks/420a996f-68a2-40c7-8bff-fce3738850be/recheck
+2025-08-09 21:06:21 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-09 21:06:21 | WARNING  | app.main:http_exception_handler:180 | HTTP异常: 400 - {'success': False, 'code': 400, 'message': '任务状态不允许重新审核，当前状态: processing', 'error_type': 'BusinessError', 'data': None, 'timestamp': 1754773581}
+2025-08-09 21:06:21 | INFO     | app.main:request_logging_middleware:237 | 📤 POST http://188.245.175.156:8208/api/v1/tasks/420a996f-68a2-40c7-8bff-fce3738850be/recheck - 状态码: 400 - 耗时: 0.020s
+2025-08-09 21:06:33 | INFO     | app.main:request_logging_middleware:228 | 📥 POST http://188.245.175.156:8208/api/v1/tasks/420a996f-68a2-40c7-8bff-fce3738850be/cancel
+2025-08-09 21:06:33 | WARNING  | app.main:http_exception_handler:180 | HTTP异常: 400 - {'success': False, 'code': 400, 'message': '任务状态不允许取消，当前状态: completed', 'error_type': 'BusinessError', 'data': None, 'timestamp': 1754773593}
+2025-08-09 21:06:33 | INFO     | app.main:request_logging_middleware:237 | 📤 POST http://188.245.175.156:8208/api/v1/tasks/420a996f-68a2-40c7-8bff-fce3738850be/cancel - 状态码: 400 - 耗时: 0.009s
+2025-08-09 21:06:46 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/tasks/420a996f-68a2-40c7-8bff-fce3738850be/statistics
+2025-08-09 21:06:46 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/tasks/420a996f-68a2-40c7-8bff-fce3738850be/statistics - 状态码: 200 - 耗时: 0.017s
+2025-08-09 21:06:56 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/tasks/420a996f-68a2-40c7-8bff-fce3738850be/progress
+2025-08-09 21:06:56 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-09 21:06:56 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/tasks/420a996f-68a2-40c7-8bff-fce3738850be/progress - 状态码: 200 - 耗时: 0.009s
+2025-08-09 21:07:15 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/results/?page=1&size=20&task_id=420a996f-68a2-40c7-8bff-fce3738850be
+2025-08-09 21:07:15 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/results/?page=1&size=20&task_id=420a996f-68a2-40c7-8bff-fce3738850be - 状态码: 200 - 耗时: 0.016s
+2025-08-09 21:08:05 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/results/f870cd09-2fee-415f-8f2d-d95b6bfead0d
+2025-08-09 21:08:05 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/results/f870cd09-2fee-415f-8f2d-d95b6bfead0d - 状态码: 200 - 耗时: 0.022s
+2025-08-09 21:08:32 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/upload/queue/status
+2025-08-09 21:08:32 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-09 21:08:34 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/upload/queue/status - 状态码: 200 - 耗时: 2.042s
+2025-08-09 21:09:18 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/results/file/d70ad9ca-c789-4b40-b777-c7e610f16697?page=1&size=50
+2025-08-09 21:09:18 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/results/file/d70ad9ca-c789-4b40-b777-c7e610f16697?page=1&size=50 - 状态码: 200 - 耗时: 0.018s
+2025-08-09 21:09:57 | INFO     | app.main:request_logging_middleware:228 | 📥 POST http://188.245.175.156:8208/api/v1/tasks/
+2025-08-09 21:09:58 | INFO     | app.main:request_logging_middleware:237 | 📤 POST http://188.245.175.156:8208/api/v1/tasks/ - 状态码: 200 - 耗时: 0.031s
+2025-08-09 21:10:36 | INFO     | app.main:request_logging_middleware:228 | 📥 POST http://188.245.175.156:8208/api/v1/upload/single
+2025-08-09 21:10:37 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-09 21:10:37 | INFO     | app.services.queue_service:add_file_to_queue:84 | 🚀 提交文件处理任务: a9105da9-7c9d-4670-b60f-c88a94eebbf1
+2025-08-09 21:10:37 | INFO     | app.services.queue_service:add_file_to_queue:94 | ✅ 文件任务已提交，Celery任务ID: a05d8b9d-d267-4f7d-91d8-863eaabe995f
+2025-08-09 21:10:37 | INFO     | app.main:request_logging_middleware:237 | 📤 POST http://188.245.175.156:8208/api/v1/upload/single - 状态码: 200 - 耗时: 0.231s
+2025-08-09 21:10:49 | INFO     | app.main:request_logging_middleware:228 | 📥 POST http://188.245.175.156:8208/api/v1/tasks/b2e09e0c-6148-432a-bec0-f06d67ab9d0c/start
+2025-08-09 21:10:49 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-09 21:10:49 | INFO     | app.api.task:start_task:203 | 任务启动结果: True
+2025-08-09 21:10:49 | INFO     | app.services.queue_service:add_task_to_queue:52 | 🚀 提交任务到 Celery: b2e09e0c-6148-432a-bec0-f06d67ab9d0c
+2025-08-09 21:10:49 | INFO     | app.services.queue_service:add_task_to_queue:61 | ✅ 任务已提交，Celery任务ID: d464052b-e2f4-46e4-8f7f-f7358c634cf0
+2025-08-09 21:10:49 | INFO     | app.api.task:start_task:208 | 队列添加结果: True
+2025-08-09 21:10:51 | INFO     | app.api.task:start_task:212 | 队列状态: {'active_tasks': 2, 'reserved_tasks': 0, 'total_pending': 2, 'workers_online': 1, 'queue_info': '使用 Celery 原生队列管理'}
+2025-08-09 21:10:51 | INFO     | app.main:request_logging_middleware:237 | 📤 POST http://188.245.175.156:8208/api/v1/tasks/b2e09e0c-6148-432a-bec0-f06d67ab9d0c/start - 状态码: 200 - 耗时: 2.060s
+2025-08-09 21:10:58 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/tasks/b2e09e0c-6148-432a-bec0-f06d67ab9d0c/statistics
+2025-08-09 21:10:58 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/tasks/b2e09e0c-6148-432a-bec0-f06d67ab9d0c/statistics - 状态码: 200 - 耗时: 0.021s
+2025-08-09 21:11:21 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/results/?page=1&size=20&task_id=b2e09e0c-6148-432a-bec0-f06d67ab9d0c
+2025-08-09 21:11:21 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/results/?page=1&size=20&task_id=b2e09e0c-6148-432a-bec0-f06d67ab9d0c - 状态码: 200 - 耗时: 0.023s
+2025-08-09 21:12:39 | INFO     | app.main:request_logging_middleware:228 | 📥 PUT http://188.245.175.156:8208/api/v1/tasks/b2e09e0c-6148-432a-bec0-f06d67ab9d0c
+2025-08-09 21:12:39 | INFO     | app.main:request_logging_middleware:237 | 📤 PUT http://188.245.175.156:8208/api/v1/tasks/b2e09e0c-6148-432a-bec0-f06d67ab9d0c - 状态码: 200 - 耗时: 0.030s
+2025-08-09 21:13:07 | INFO     | app.main:request_logging_middleware:228 | 📥 POST http://188.245.175.156:8208/api/v1/tasks/420a996f-68a2-40c7-8bff-fce3738850be/recheck
+2025-08-09 21:13:07 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-09 21:13:07 | INFO     | app.services.queue_service:add_task_to_queue:52 | 🚀 提交任务到 Celery: 420a996f-68a2-40c7-8bff-fce3738850be
+2025-08-09 21:13:07 | INFO     | app.services.queue_service:add_task_to_queue:61 | ✅ 任务已提交，Celery任务ID: eefe5ddb-e1ac-4eba-9b9c-092d41a4ab76
+2025-08-09 21:13:07 | INFO     | app.main:request_logging_middleware:237 | 📤 POST http://188.245.175.156:8208/api/v1/tasks/420a996f-68a2-40c7-8bff-fce3738850be/recheck - 状态码: 200 - 耗时: 0.055s
+2025-08-09 21:13:15 | INFO     | app.main:request_logging_middleware:228 | 📥 POST http://188.245.175.156:8208/api/v1/tasks/b2e09e0c-6148-432a-bec0-f06d67ab9d0c/recheck
+2025-08-09 21:13:15 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-09 21:13:15 | INFO     | app.services.queue_service:add_task_to_queue:52 | 🚀 提交任务到 Celery: b2e09e0c-6148-432a-bec0-f06d67ab9d0c
+2025-08-09 21:13:15 | INFO     | app.services.queue_service:add_task_to_queue:61 | ✅ 任务已提交，Celery任务ID: dfecbde5-75db-4b9f-b01f-25204e3b30df
+2025-08-09 21:13:15 | INFO     | app.main:request_logging_middleware:237 | 📤 POST http://188.245.175.156:8208/api/v1/tasks/b2e09e0c-6148-432a-bec0-f06d67ab9d0c/recheck - 状态码: 200 - 耗时: 0.041s
+2025-08-09 21:13:29 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/tasks/b2e09e0c-6148-432a-bec0-f06d67ab9d0c
+2025-08-09 21:13:29 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/tasks/b2e09e0c-6148-432a-bec0-f06d67ab9d0c - 状态码: 200 - 耗时: 0.008s
+2025-08-09 21:13:39 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/tasks/b2e09e0c-6148-432a-bec0-f06d67ab9d0c
+2025-08-09 21:13:39 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/tasks/b2e09e0c-6148-432a-bec0-f06d67ab9d0c - 状态码: 200 - 耗时: 0.006s
+2025-08-09 21:13:46 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/tasks/?page=1&size=20
+2025-08-09 21:13:46 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/tasks/?page=1&size=20 - 状态码: 200 - 耗时: 0.015s
+2025-08-09 21:14:16 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/tasks/?page=1&size=20
+2025-08-09 21:14:16 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/tasks/?page=1&size=20 - 状态码: 200 - 耗时: 0.013s
+2025-08-09 21:14:30 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/tasks/?page=1&size=20
+2025-08-09 21:14:30 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/tasks/?page=1&size=20 - 状态码: 200 - 耗时: 0.013s
+2025-08-09 21:14:39 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/tasks/?page=1&size=20
+2025-08-09 21:14:40 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/tasks/?page=1&size=20 - 状态码: 200 - 耗时: 0.017s
+2025-08-09 21:15:01 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/results/?page=1&size=20&task_id=b2e09e0c-6148-432a-bec0-f06d67ab9d0c
+2025-08-09 21:15:01 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/results/?page=1&size=20&task_id=b2e09e0c-6148-432a-bec0-f06d67ab9d0c - 状态码: 200 - 耗时: 0.018s
+2025-08-09 21:15:08 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/results/?page=1&size=20
+2025-08-09 21:15:08 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/results/?page=1&size=20 - 状态码: 200 - 耗时: 0.013s
+2025-08-09 21:15:31 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/results/b2e09e0c-6148-432a-bec0-f06d67ab9d0c
+2025-08-09 21:15:31 | WARNING  | app.main:http_exception_handler:180 | HTTP异常: 404 - {'success': False, 'code': 404, 'message': '审核结果不存在: b2e09e0c-6148-432a-bec0-f06d67ab9d0c', 'error_type': 'NotFoundError', 'data': None, 'timestamp': 1754774131}
+2025-08-09 21:15:31 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/results/b2e09e0c-6148-432a-bec0-f06d67ab9d0c - 状态码: 404 - 耗时: 0.016s
+2025-08-09 21:16:10 | INFO     | app.main:request_logging_middleware:228 | 📥 POST http://188.245.175.156:8208/api/v1/tasks/
+2025-08-09 21:16:10 | INFO     | app.main:request_logging_middleware:237 | 📤 POST http://188.245.175.156:8208/api/v1/tasks/ - 状态码: 200 - 耗时: 0.017s
+2025-08-09 21:18:14 | INFO     | app.main:request_logging_middleware:228 | 📥 POST http://188.245.175.156:8208/api/v1/upload/single
+2025-08-09 21:18:14 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-09 21:18:14 | INFO     | app.services.queue_service:add_file_to_queue:84 | 🚀 提交文件处理任务: c52e2f25-7e53-484f-a5ff-7f966dde8afc
+2025-08-09 21:18:15 | INFO     | app.services.queue_service:add_file_to_queue:94 | ✅ 文件任务已提交，Celery任务ID: 13549470-29d2-40c6-ab8e-c857c5727111
+2025-08-09 21:18:15 | INFO     | app.main:request_logging_middleware:237 | 📤 POST http://188.245.175.156:8208/api/v1/upload/single - 状态码: 200 - 耗时: 0.042s
+2025-08-09 21:18:30 | INFO     | app.main:request_logging_middleware:228 | 📥 POST http://188.245.175.156:8208/api/v1/tasks/4cf87e1c-a8f9-42bd-ab7e-3020a3b97eba/start
+2025-08-09 21:18:30 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-09 21:18:30 | INFO     | app.api.task:start_task:203 | 任务启动结果: True
+2025-08-09 21:18:30 | INFO     | app.services.queue_service:add_task_to_queue:52 | 🚀 提交任务到 Celery: 4cf87e1c-a8f9-42bd-ab7e-3020a3b97eba
+2025-08-09 21:18:30 | INFO     | app.services.queue_service:add_task_to_queue:61 | ✅ 任务已提交，Celery任务ID: d6f70aab-9371-49b0-9000-d6ea8a412630
+2025-08-09 21:18:30 | INFO     | app.api.task:start_task:208 | 队列添加结果: True
+2025-08-09 21:18:32 | INFO     | app.api.task:start_task:212 | 队列状态: {'active_tasks': 0, 'reserved_tasks': 0, 'total_pending': 0, 'workers_online': 1, 'queue_info': '使用 Celery 原生队列管理'}
+2025-08-09 21:18:32 | INFO     | app.main:request_logging_middleware:237 | 📤 POST http://188.245.175.156:8208/api/v1/tasks/4cf87e1c-a8f9-42bd-ab7e-3020a3b97eba/start - 状态码: 200 - 耗时: 2.096s
+2025-08-09 21:18:42 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/tasks/4cf87e1c-a8f9-42bd-ab7e-3020a3b97eba/statistics
+2025-08-09 21:18:42 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/tasks/4cf87e1c-a8f9-42bd-ab7e-3020a3b97eba/statistics - 状态码: 200 - 耗时: 0.026s
+2025-08-09 21:19:00 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/results/?page=1&size=20&task_id=4cf87e1c-a8f9-42bd-ab7e-3020a3b97eba
+2025-08-09 21:19:00 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/results/?page=1&size=20&task_id=4cf87e1c-a8f9-42bd-ab7e-3020a3b97eba - 状态码: 200 - 耗时: 0.016s
+2025-08-09 21:42:00 | INFO     | app.main:lifespan:53 | 👋 应用关闭中...
+2025-08-09 21:42:00 | INFO     | app.main:lifespan:54 | ✅ 应用关闭完成
+2025-08-09 22:09:24 | INFO     | app.main:lifespan:26 | 🚀 应用启动中...
+2025-08-09 22:09:24 | INFO     | app.main:lifespan:31 | ✅ 上传目录初始化完成
+2025-08-09 22:09:24 | INFO     | app.database:init_database:107 | ✅ 数据库模型加载完成
+2025-08-09 22:09:24 | INFO     | app.main:lifespan:35 | ✅ 数据库初始化完成
+2025-08-09 22:09:24 | INFO     | app.database:check_database_connection:117 | ⚠️ 跳过数据库连接检查
+2025-08-09 22:09:24 | INFO     | app.database:check_redis_connection:138 | ✅ Redis连接正常
+2025-08-09 22:09:24 | INFO     | app.main:lifespan:40 | ✅ 依赖服务连接正常
+2025-08-09 22:09:24 | INFO     | app.main:lifespan:44 | 🎉 应用启动完成
+2025-08-09 22:09:51 | INFO     | app.main:request_logging_middleware:228 | 📥 POST http://188.245.175.156:8208/api/v1/tasks/
+2025-08-09 22:09:52 | WARNING  | app.database:patched_get_server_version_info:27 | 检测到openGauss，使用PostgreSQL 14.0兼容模式
+2025-08-09 22:09:52 | INFO     | app.main:request_logging_middleware:237 | 📤 POST http://188.245.175.156:8208/api/v1/tasks/ - 状态码: 200 - 耗时: 0.128s
+2025-08-09 22:10:42 | INFO     | app.main:request_logging_middleware:228 | 📥 POST http://188.245.175.156:8208/api/v1/upload/single
+2025-08-09 22:10:42 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-09 22:10:42 | INFO     | app.services.queue_service:add_file_to_queue:84 | 🚀 提交文件处理任务: 82ec8a4d-b530-4dc0-9d8b-7c8a56b21710
+2025-08-09 22:10:42 | INFO     | app.services.queue_service:add_file_to_queue:94 | ✅ 文件任务已提交，Celery任务ID: 343b94df-79be-457e-a010-0b22f1da615c
+2025-08-09 22:10:42 | INFO     | app.main:request_logging_middleware:237 | 📤 POST http://188.245.175.156:8208/api/v1/upload/single - 状态码: 200 - 耗时: 0.404s
+2025-08-09 22:11:00 | INFO     | app.main:request_logging_middleware:228 | 📥 POST http://188.245.175.156:8208/api/v1/tasks/e992a7ce-8182-46fa-bfd7-c5c0396381e6/start
+2025-08-09 22:11:00 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-09 22:11:00 | INFO     | app.api.task:start_task:203 | 任务启动结果: True
+2025-08-09 22:11:00 | INFO     | app.services.queue_service:add_task_to_queue:52 | 🚀 提交任务到 Celery: e992a7ce-8182-46fa-bfd7-c5c0396381e6
+2025-08-09 22:11:00 | INFO     | app.services.queue_service:add_task_to_queue:61 | ✅ 任务已提交，Celery任务ID: 2f6cec1d-4ef2-4ee8-a68d-4a96d49a23d3
+2025-08-09 22:11:00 | INFO     | app.api.task:start_task:208 | 队列添加结果: True
+2025-08-09 22:11:02 | INFO     | app.api.task:start_task:212 | 队列状态: {'active_tasks': 1, 'reserved_tasks': 0, 'total_pending': 1, 'workers_online': 1, 'queue_info': '使用 Celery 原生队列管理'}
+2025-08-09 22:11:02 | INFO     | app.main:request_logging_middleware:237 | 📤 POST http://188.245.175.156:8208/api/v1/tasks/e992a7ce-8182-46fa-bfd7-c5c0396381e6/start - 状态码: 200 - 耗时: 2.118s
+2025-08-09 22:11:31 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/tasks/e992a7ce-8182-46fa-bfd7-c5c0396381e6/statistics
+2025-08-09 22:11:31 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/tasks/e992a7ce-8182-46fa-bfd7-c5c0396381e6/statistics - 状态码: 200 - 耗时: 0.123s
+2025-08-09 22:11:54 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/results/?page=1&size=20&task_id=e992a7ce-8182-46fa-bfd7-c5c0396381e6
+2025-08-09 22:11:54 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/results/?page=1&size=20&task_id=e992a7ce-8182-46fa-bfd7-c5c0396381e6 - 状态码: 200 - 耗时: 0.029s
+2025-08-10 08:41:33 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/tasks/e992a7ce-8182-46fa-bfd7-c5c0396381e6/statistics
+2025-08-10 08:41:33 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/tasks/e992a7ce-8182-46fa-bfd7-c5c0396381e6/statistics - 状态码: 200 - 耗时: 0.063s
+2025-08-10 08:41:44 | INFO     | app.main:request_logging_middleware:228 | 📥 POST http://188.245.175.156:8208/api/v1/upload/single
+2025-08-10 08:41:44 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-10 08:41:44 | WARNING  | app.main:http_exception_handler:180 | HTTP异常: 400 - 文件上传失败: 文件已存在: 71hRz+9Mk6L._UF1000,1000_QL80_.jpg
+2025-08-10 08:41:44 | INFO     | app.main:request_logging_middleware:237 | 📤 POST http://188.245.175.156:8208/api/v1/upload/single - 状态码: 400 - 耗时: 0.133s
+2025-08-10 08:43:30 | INFO     | app.main:request_logging_middleware:228 | 📥 POST http://188.245.175.156:8208/api/v1/upload/single
+2025-08-10 08:43:31 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-10 08:43:31 | WARNING  | app.main:http_exception_handler:180 | HTTP异常: 400 - 文件上传失败: 文件已存在: 0baedde4-ab5d-4e58-bc24-5482321edacc.png
+2025-08-10 08:43:31 | INFO     | app.main:request_logging_middleware:237 | 📤 POST http://188.245.175.156:8208/api/v1/upload/single - 状态码: 400 - 耗时: 0.193s
+2025-08-10 08:44:20 | INFO     | app.main:request_logging_middleware:228 | 📥 POST http://188.245.175.156:8208/api/v1/upload/single
+2025-08-10 08:44:20 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-10 08:44:20 | WARNING  | app.main:http_exception_handler:180 | HTTP异常: 400 - {'success': False, 'code': 400, 'message': '不支持的文件类型: webp', 'error_type': 'ValidationError', 'data': None, 'timestamp': 1754815460}
+2025-08-10 08:44:20 | INFO     | app.main:request_logging_middleware:237 | 📤 POST http://188.245.175.156:8208/api/v1/upload/single - 状态码: 400 - 耗时: 0.041s
+2025-08-10 08:46:12 | INFO     | app.main:request_logging_middleware:228 | 📥 POST http://188.245.175.156:8208/api/v1/upload/single
+2025-08-10 08:46:13 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-10 08:46:13 | INFO     | app.services.queue_service:add_file_to_queue:84 | 🚀 提交文件处理任务: 588b24d4-6414-4529-aae4-8948829e2c8b
+2025-08-10 08:46:13 | INFO     | app.services.queue_service:add_file_to_queue:94 | ✅ 文件任务已提交，Celery任务ID: d5efcb2a-47ee-48de-9010-26fe4d298c41
+2025-08-10 08:46:13 | INFO     | app.main:request_logging_middleware:237 | 📤 POST http://188.245.175.156:8208/api/v1/upload/single - 状态码: 200 - 耗时: 0.333s
+2025-08-10 08:46:31 | INFO     | app.main:request_logging_middleware:228 | 📥 POST http://188.245.175.156:8208/api/v1/tasks/e992a7ce-8182-46fa-bfd7-c5c0396381e6/start
+2025-08-10 08:46:31 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-10 08:46:31 | INFO     | app.api.task:start_task:203 | 任务启动结果: True
+2025-08-10 08:46:31 | INFO     | app.services.queue_service:add_task_to_queue:52 | 🚀 提交任务到 Celery: e992a7ce-8182-46fa-bfd7-c5c0396381e6
+2025-08-10 08:46:31 | INFO     | app.services.queue_service:add_task_to_queue:61 | ✅ 任务已提交，Celery任务ID: 054bbb13-ff87-43f4-b1d7-0191bb32a4dc
+2025-08-10 08:46:31 | INFO     | app.api.task:start_task:208 | 队列添加结果: True
+2025-08-10 08:46:34 | INFO     | app.api.task:start_task:212 | 队列状态: {'active_tasks': 2, 'reserved_tasks': 0, 'total_pending': 2, 'workers_online': 1, 'queue_info': '使用 Celery 原生队列管理'}
+2025-08-10 08:46:34 | INFO     | app.main:request_logging_middleware:237 | 📤 POST http://188.245.175.156:8208/api/v1/tasks/e992a7ce-8182-46fa-bfd7-c5c0396381e6/start - 状态码: 200 - 耗时: 2.084s
+2025-08-10 08:46:48 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/tasks/0baedde4-ab5d-4e58-bc24-5482321edacc.png/statistics
+2025-08-10 08:46:48 | ERROR    | app.main:general_exception_handler:201 | 未处理异常: DataError: (psycopg2.errors.InvalidTextRepresentation) invalid input syntax for uuid: "0baedde4-ab5d-4e58-bc24-5482321edacc.png"
+LINE 3: WHERE review_tasks.id = '0baedde4-ab5d-4e58-bc24-5482321edac...
+                                ^
+
+[SQL: SELECT review_tasks.id AS review_tasks_id, review_tasks.name AS review_tasks_name, review_tasks.description AS review_tasks_description, review_tasks.strategy_type AS review_tasks_strategy_type, review_tasks.strategy_contents AS review_tasks_strategy_contents, review_tasks.video_frame_interval AS review_tasks_video_frame_interval, review_tasks.status AS review_tasks_status, review_tasks.progress AS review_tasks_progress, review_tasks.error_message AS review_tasks_error_message, review_tasks.total_files AS review_tasks_total_files, review_tasks.processed_files AS review_tasks_processed_files, review_tasks.violation_count AS review_tasks_violation_count, review_tasks.creator_id AS review_tasks_creator_id, review_tasks.created_at AS review_tasks_created_at, review_tasks.updated_at AS review_tasks_updated_at, review_tasks.started_at AS review_tasks_started_at, review_tasks.completed_at AS review_tasks_completed_at 
+FROM review_tasks 
+WHERE review_tasks.id = %(id_1)s::UUID 
+ LIMIT %(param_1)s]
+[parameters: {'id_1': '0baedde4-ab5d-4e58-bc24-5482321edacc.png', 'param_1': 1}]
+(Background on this error at: https://sqlalche.me/e/20/9h9h)
+2025-08-10 08:46:57 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/tasks/0baedde4-ab5d-4e58-bc24-5482321edacc.png/progress
+2025-08-10 08:46:57 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-10 08:46:57 | ERROR    | app.main:general_exception_handler:201 | 未处理异常: DataError: (psycopg2.errors.InvalidTextRepresentation) invalid input syntax for uuid: "0baedde4-ab5d-4e58-bc24-5482321edacc.png"
+LINE 3: WHERE review_tasks.id = '0baedde4-ab5d-4e58-bc24-5482321edac...
+                                ^
+
+[SQL: SELECT review_tasks.id AS review_tasks_id, review_tasks.name AS review_tasks_name, review_tasks.description AS review_tasks_description, review_tasks.strategy_type AS review_tasks_strategy_type, review_tasks.strategy_contents AS review_tasks_strategy_contents, review_tasks.video_frame_interval AS review_tasks_video_frame_interval, review_tasks.status AS review_tasks_status, review_tasks.progress AS review_tasks_progress, review_tasks.error_message AS review_tasks_error_message, review_tasks.total_files AS review_tasks_total_files, review_tasks.processed_files AS review_tasks_processed_files, review_tasks.violation_count AS review_tasks_violation_count, review_tasks.creator_id AS review_tasks_creator_id, review_tasks.created_at AS review_tasks_created_at, review_tasks.updated_at AS review_tasks_updated_at, review_tasks.started_at AS review_tasks_started_at, review_tasks.completed_at AS review_tasks_completed_at 
+FROM review_tasks 
+WHERE review_tasks.id = %(id_1)s::UUID 
+ LIMIT %(param_1)s]
+[parameters: {'id_1': '0baedde4-ab5d-4e58-bc24-5482321edacc.png', 'param_1': 1}]
+(Background on this error at: https://sqlalche.me/e/20/9h9h)
+2025-08-10 08:48:00 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/results/?page=1&size=20&task_id=e992a7ce-8182-46fa-bfd7-c5c0396381e6
+2025-08-10 08:48:00 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/results/?page=1&size=20&task_id=e992a7ce-8182-46fa-bfd7-c5c0396381e6 - 状态码: 200 - 耗时: 0.029s
+2025-08-10 08:48:44 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/tasks/e992a7ce-8182-46fa-bfd7-c5c0396381e6/statistics
+2025-08-10 08:48:44 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/tasks/e992a7ce-8182-46fa-bfd7-c5c0396381e6/statistics - 状态码: 200 - 耗时: 0.025s
+2025-08-10 08:49:26 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/results/?page=1&size=20&task_id=e992a7ce-8182-46fa-bfd7-c5c0396381e6
+2025-08-10 08:49:26 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/results/?page=1&size=20&task_id=e992a7ce-8182-46fa-bfd7-c5c0396381e6 - 状态码: 200 - 耗时: 0.020s
+2025-08-10 08:57:09 | INFO     | app.main:request_logging_middleware:228 | 📥 POST http://188.245.175.156:8208/api/v1/upload/single
+2025-08-10 08:57:09 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-10 08:57:09 | INFO     | app.services.queue_service:add_file_to_queue:84 | 🚀 提交文件处理任务: 1c92db6d-4f58-44ba-b309-a04f77f18e0a
+2025-08-10 08:57:09 | INFO     | app.services.queue_service:add_file_to_queue:94 | ✅ 文件任务已提交，Celery任务ID: a0a24a4f-37d3-483d-a9e8-3e5c98f2a06b
+2025-08-10 08:57:09 | INFO     | app.main:request_logging_middleware:237 | 📤 POST http://188.245.175.156:8208/api/v1/upload/single - 状态码: 200 - 耗时: 0.207s
+2025-08-10 08:58:02 | INFO     | app.main:request_logging_middleware:228 | 📥 POST http://188.245.175.156:8208/api/v1/tasks/e992a7ce-8182-46fa-bfd7-c5c0396381e6/start
+2025-08-10 08:58:02 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-10 08:58:02 | INFO     | app.api.task:start_task:203 | 任务启动结果: True
+2025-08-10 08:58:02 | INFO     | app.services.queue_service:add_task_to_queue:52 | 🚀 提交任务到 Celery: e992a7ce-8182-46fa-bfd7-c5c0396381e6
+2025-08-10 08:58:02 | INFO     | app.services.queue_service:add_task_to_queue:61 | ✅ 任务已提交，Celery任务ID: 419823c6-aa8f-4eca-8a7b-ea46fd500d44
+2025-08-10 08:58:02 | INFO     | app.api.task:start_task:208 | 队列添加结果: True
+2025-08-10 08:58:05 | INFO     | app.api.task:start_task:212 | 队列状态: {'active_tasks': 1, 'reserved_tasks': 0, 'total_pending': 1, 'workers_online': 1, 'queue_info': '使用 Celery 原生队列管理'}
+2025-08-10 08:58:05 | INFO     | app.main:request_logging_middleware:237 | 📤 POST http://188.245.175.156:8208/api/v1/tasks/e992a7ce-8182-46fa-bfd7-c5c0396381e6/start - 状态码: 200 - 耗时: 2.086s
+2025-08-10 08:58:15 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/tasks/e992a7ce-8182-46fa-bfd7-c5c0396381e6/statistics
+2025-08-10 08:58:15 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/tasks/e992a7ce-8182-46fa-bfd7-c5c0396381e6/statistics - 状态码: 200 - 耗时: 0.019s
+2025-08-10 08:58:20 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/tasks/e992a7ce-8182-46fa-bfd7-c5c0396381e6/statistics
+2025-08-10 08:58:20 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/tasks/e992a7ce-8182-46fa-bfd7-c5c0396381e6/statistics - 状态码: 200 - 耗时: 0.014s
+2025-08-10 08:58:26 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/tasks/e992a7ce-8182-46fa-bfd7-c5c0396381e6/statistics
+2025-08-10 08:58:26 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/tasks/e992a7ce-8182-46fa-bfd7-c5c0396381e6/statistics - 状态码: 200 - 耗时: 0.010s
+2025-08-10 08:58:36 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/tasks/e992a7ce-8182-46fa-bfd7-c5c0396381e6/statistics
+2025-08-10 08:58:36 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/tasks/e992a7ce-8182-46fa-bfd7-c5c0396381e6/statistics - 状态码: 200 - 耗时: 0.018s
+2025-08-10 08:59:06 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/tasks/e992a7ce-8182-46fa-bfd7-c5c0396381e6/statistics
+2025-08-10 08:59:06 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/tasks/e992a7ce-8182-46fa-bfd7-c5c0396381e6/statistics - 状态码: 200 - 耗时: 0.009s
+2025-08-10 08:59:26 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/results/?page=1&size=20&task_id=e992a7ce-8182-46fa-bfd7-c5c0396381e6
+2025-08-10 08:59:26 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/results/?page=1&size=20&task_id=e992a7ce-8182-46fa-bfd7-c5c0396381e6 - 状态码: 200 - 耗时: 0.019s
+2025-08-10 08:59:49 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/results/?page=1&size=20&task_id=e992a7ce-8182-46fa-bfd7-c5c0396381e6
+2025-08-10 08:59:49 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/results/?page=1&size=20&task_id=e992a7ce-8182-46fa-bfd7-c5c0396381e6 - 状态码: 200 - 耗时: 0.015s
+2025-08-10 09:02:46 | INFO     | app.main:request_logging_middleware:228 | 📥 PUT http://188.245.175.156:8208/api/v1/tasks/e992a7ce-8182-46fa-bfd7-c5c0396381e6
+2025-08-10 09:02:46 | INFO     | app.main:request_logging_middleware:237 | 📤 PUT http://188.245.175.156:8208/api/v1/tasks/e992a7ce-8182-46fa-bfd7-c5c0396381e6 - 状态码: 200 - 耗时: 0.044s
+2025-08-10 09:06:01 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/results/?page=1&size=20&task_id=e992a7ce-8182-46fa-bfd7-c5c0396381e6
+2025-08-10 09:06:01 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/results/?page=1&size=20&task_id=e992a7ce-8182-46fa-bfd7-c5c0396381e6 - 状态码: 200 - 耗时: 0.026s
+2025-08-10 09:11:19 | INFO     | app.main:request_logging_middleware:228 | 📥 POST http://188.245.175.156:8208/api/v1/upload/batch
+2025-08-10 09:11:20 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-10 09:11:20 | INFO     | app.services.queue_service:add_file_to_queue:84 | 🚀 提交文件处理任务: bd2b32b1-ae7b-4b5b-9a81-3ab1468510d3
+2025-08-10 09:11:20 | INFO     | app.services.queue_service:add_file_to_queue:94 | ✅ 文件任务已提交，Celery任务ID: e0e50b3a-3543-4662-ad1a-114b5b534257
+2025-08-10 09:11:20 | INFO     | app.main:request_logging_middleware:237 | 📤 POST http://188.245.175.156:8208/api/v1/upload/batch - 状态码: 200 - 耗时: 0.309s
+2025-08-10 09:12:18 | INFO     | app.main:request_logging_middleware:228 | 📥 POST http://188.245.175.156:8208/api/v1/upload/batch
+2025-08-10 09:12:18 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-10 09:12:18 | INFO     | app.main:request_logging_middleware:237 | 📤 POST http://188.245.175.156:8208/api/v1/upload/batch - 状态码: 200 - 耗时: 0.275s
+2025-08-10 09:31:24 | INFO     | app.main:request_logging_middleware:228 | 📥 DELETE http://188.245.175.156:8208/api/v1/upload/a86474c6-7835-4833-8148-c9cf7bd242d9.png
+2025-08-10 09:31:24 | ERROR    | app.main:general_exception_handler:201 | 未处理异常: DataError: (psycopg2.errors.InvalidTextRepresentation) invalid input syntax for uuid: "a86474c6-7835-4833-8148-c9cf7bd242d9.png"
+LINE 3: WHERE review_files.id = 'a86474c6-7835-4833-8148-c9cf7bd242d...
+                                ^
+
+[SQL: SELECT review_files.id AS review_files_id, review_files.task_id AS review_files_task_id, review_files.original_name AS review_files_original_name, review_files.file_path AS review_files_file_path, review_files.file_type AS review_files_file_type, review_files.file_size AS review_files_file_size, review_files.mime_type AS review_files_mime_type, review_files.file_extension AS review_files_file_extension, review_files.content_hash AS review_files_content_hash, review_files.page_count AS review_files_page_count, review_files.duration AS review_files_duration, review_files.status AS review_files_status, review_files.progress AS review_files_progress, review_files.error_message AS review_files_error_message, review_files.ocr_blocks_count AS review_files_ocr_blocks_count, review_files.text_blocks_count AS review_files_text_blocks_count, review_files.image_blocks_count AS review_files_image_blocks_count, review_files.violation_count AS review_files_violation_count, review_files.created_at AS review_files_created_at, review_files.updated_at AS review_files_updated_at, review_files.processed_at AS review_files_processed_at 
+FROM review_files 
+WHERE review_files.id = %(id_1)s::UUID 
+ LIMIT %(param_1)s]
+[parameters: {'id_1': 'a86474c6-7835-4833-8148-c9cf7bd242d9.png', 'param_1': 1}]
+(Background on this error at: https://sqlalche.me/e/20/9h9h)
+2025-08-10 09:32:55 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/upload/queue/status
+2025-08-10 09:32:55 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-10 09:32:57 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/upload/queue/status - 状态码: 200 - 耗时: 2.051s
+2025-08-10 09:34:03 | INFO     | app.main:request_logging_middleware:228 | 📥 POST http://188.245.175.156:8208/api/v1/upload/batch
+2025-08-10 09:34:03 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-10 09:34:03 | INFO     | app.services.queue_service:add_file_to_queue:84 | 🚀 提交文件处理任务: 5b02e9d2-7295-4f9c-92ea-f7473634faf5
+2025-08-10 09:34:03 | INFO     | app.services.queue_service:add_file_to_queue:94 | ✅ 文件任务已提交，Celery任务ID: c35b051c-1f09-4430-b946-22123a6e7b0c
+2025-08-10 09:34:03 | INFO     | app.services.queue_service:add_file_to_queue:84 | 🚀 提交文件处理任务: 4a444b93-3014-4488-9de4-67706ff4a12c
+2025-08-10 09:34:03 | INFO     | app.services.queue_service:add_file_to_queue:94 | ✅ 文件任务已提交，Celery任务ID: 8b61f5c1-1edb-4beb-8832-deaa6fa878cf
+2025-08-10 09:34:03 | INFO     | app.main:request_logging_middleware:237 | 📤 POST http://188.245.175.156:8208/api/v1/upload/batch - 状态码: 200 - 耗时: 0.364s
+2025-08-10 09:34:31 | INFO     | app.main:request_logging_middleware:228 | 📥 POST http://188.245.175.156:8208/api/v1/tasks/e992a7ce-8182-46fa-bfd7-c5c0396381e6/start
+2025-08-10 09:34:31 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-10 09:34:31 | INFO     | app.api.task:start_task:203 | 任务启动结果: True
+2025-08-10 09:34:31 | INFO     | app.services.queue_service:add_task_to_queue:52 | 🚀 提交任务到 Celery: e992a7ce-8182-46fa-bfd7-c5c0396381e6
+2025-08-10 09:34:31 | INFO     | app.services.queue_service:add_task_to_queue:61 | ✅ 任务已提交，Celery任务ID: b5b9f11d-df63-4b3a-92e8-0625804cfca5
+2025-08-10 09:34:31 | INFO     | app.api.task:start_task:208 | 队列添加结果: True
+2025-08-10 09:34:33 | INFO     | app.api.task:start_task:212 | 队列状态: {'active_tasks': 2, 'reserved_tasks': 0, 'total_pending': 2, 'workers_online': 1, 'queue_info': '使用 Celery 原生队列管理'}
+2025-08-10 09:34:33 | INFO     | app.main:request_logging_middleware:237 | 📤 POST http://188.245.175.156:8208/api/v1/tasks/e992a7ce-8182-46fa-bfd7-c5c0396381e6/start - 状态码: 200 - 耗时: 2.073s
+2025-08-10 09:34:58 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/tasks/e992a7ce-8182-46fa-bfd7-c5c0396381e6/progress
+2025-08-10 09:34:58 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-10 09:34:58 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/tasks/e992a7ce-8182-46fa-bfd7-c5c0396381e6/progress - 状态码: 200 - 耗时: 0.011s
+2025-08-10 09:35:13 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/tasks/e992a7ce-8182-46fa-bfd7-c5c0396381e6/progress
+2025-08-10 09:35:13 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-10 09:35:13 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/tasks/e992a7ce-8182-46fa-bfd7-c5c0396381e6/progress - 状态码: 200 - 耗时: 0.013s
+2025-08-10 09:35:23 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/results/?page=1&size=20&task_id=e992a7ce-8182-46fa-bfd7-c5c0396381e6
+2025-08-10 09:35:23 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/results/?page=1&size=20&task_id=e992a7ce-8182-46fa-bfd7-c5c0396381e6 - 状态码: 200 - 耗时: 0.012s
+2025-08-10 09:45:16 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/results/?page=1&size=20&task_id=e992a7ce-8182-46fa-bfd7-c5c0396381e6
+2025-08-10 09:45:16 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/results/?page=1&size=20&task_id=e992a7ce-8182-46fa-bfd7-c5c0396381e6 - 状态码: 200 - 耗时: 0.037s
+2025-08-10 09:47:23 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/tasks/?page=1&size=20
+2025-08-10 09:47:23 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/tasks/?page=1&size=20 - 状态码: 200 - 耗时: 0.037s
+2025-08-10 09:48:35 | INFO     | app.main:request_logging_middleware:228 | 📥 POST http://188.245.175.156:8208/api/v1/tasks/
+2025-08-10 09:48:35 | INFO     | app.main:request_logging_middleware:237 | 📤 POST http://188.245.175.156:8208/api/v1/tasks/ - 状态码: 200 - 耗时: 0.035s
+2025-08-10 09:50:16 | INFO     | app.main:request_logging_middleware:228 | 📥 POST http://188.245.175.156:8208/api/v1/upload/single
+2025-08-10 09:50:16 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-10 09:50:16 | INFO     | app.services.queue_service:add_file_to_queue:84 | 🚀 提交文件处理任务: 6b6daa92-6116-40af-b516-8d1dba69339e
+2025-08-10 09:50:16 | INFO     | app.services.queue_service:add_file_to_queue:94 | ✅ 文件任务已提交，Celery任务ID: 2eaee802-33e7-486c-99eb-511e9487a196
+2025-08-10 09:50:16 | INFO     | app.main:request_logging_middleware:237 | 📤 POST http://188.245.175.156:8208/api/v1/upload/single - 状态码: 200 - 耗时: 0.229s
+2025-08-10 09:50:27 | INFO     | app.main:request_logging_middleware:228 | 📥 POST http://188.245.175.156:8208/api/v1/tasks/de8296b9-c86d-4962-959d-e00024c9dd33/start
+2025-08-10 09:50:27 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-10 09:50:27 | INFO     | app.api.task:start_task:203 | 任务启动结果: True
+2025-08-10 09:50:27 | INFO     | app.services.queue_service:add_task_to_queue:52 | 🚀 提交任务到 Celery: de8296b9-c86d-4962-959d-e00024c9dd33
+2025-08-10 09:50:27 | INFO     | app.services.queue_service:add_task_to_queue:61 | ✅ 任务已提交，Celery任务ID: c8458310-cd66-4379-8afa-27a6d7dd547d
+2025-08-10 09:50:27 | INFO     | app.api.task:start_task:208 | 队列添加结果: True
+2025-08-10 09:50:29 | INFO     | app.api.task:start_task:212 | 队列状态: {'active_tasks': 2, 'reserved_tasks': 0, 'total_pending': 2, 'workers_online': 1, 'queue_info': '使用 Celery 原生队列管理'}
+2025-08-10 09:50:29 | INFO     | app.main:request_logging_middleware:237 | 📤 POST http://188.245.175.156:8208/api/v1/tasks/de8296b9-c86d-4962-959d-e00024c9dd33/start - 状态码: 200 - 耗时: 2.076s
+2025-08-10 09:50:40 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/tasks/de8296b9-c86d-4962-959d-e00024c9dd33/progress
+2025-08-10 09:50:40 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-10 09:50:40 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/tasks/de8296b9-c86d-4962-959d-e00024c9dd33/progress - 状态码: 200 - 耗时: 0.023s
+2025-08-10 09:50:51 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/tasks/de8296b9-c86d-4962-959d-e00024c9dd33/progress
+2025-08-10 09:50:51 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-10 09:50:51 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/tasks/de8296b9-c86d-4962-959d-e00024c9dd33/progress - 状态码: 200 - 耗时: 0.024s
+2025-08-10 09:50:59 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/tasks/de8296b9-c86d-4962-959d-e00024c9dd33/statistics
+2025-08-10 09:50:59 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/tasks/de8296b9-c86d-4962-959d-e00024c9dd33/statistics - 状态码: 200 - 耗时: 0.020s
+2025-08-10 09:51:15 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/results/?page=1&size=20&task_id=de8296b9-c86d-4962-959d-e00024c9dd33
+2025-08-10 09:51:15 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/results/?page=1&size=20&task_id=de8296b9-c86d-4962-959d-e00024c9dd33 - 状态码: 200 - 耗时: 0.018s
+2025-08-10 10:05:11 | INFO     | app.main:lifespan:53 | 👋 应用关闭中...
+2025-08-10 10:05:11 | INFO     | app.main:lifespan:54 | ✅ 应用关闭完成
+2025-08-10 10:08:32 | INFO     | app.main:lifespan:26 | 🚀 应用启动中...
+2025-08-10 10:08:32 | INFO     | app.main:lifespan:31 | ✅ 上传目录初始化完成
+2025-08-10 10:08:32 | INFO     | app.database:init_database:107 | ✅ 数据库模型加载完成
+2025-08-10 10:08:32 | INFO     | app.main:lifespan:35 | ✅ 数据库初始化完成
+2025-08-10 10:08:32 | INFO     | app.database:check_database_connection:117 | ⚠️ 跳过数据库连接检查
+2025-08-10 10:08:32 | INFO     | app.database:check_redis_connection:138 | ✅ Redis连接正常
+2025-08-10 10:08:32 | INFO     | app.main:lifespan:40 | ✅ 依赖服务连接正常
+2025-08-10 10:08:32 | INFO     | app.main:lifespan:44 | 🎉 应用启动完成
+2025-08-10 10:10:30 | INFO     | app.main:request_logging_middleware:228 | 📥 POST http://188.245.175.156:8208/api/v1/tasks/e992a7ce-8182-46fa-bfd7-c5c0396381e6/recheck
+2025-08-10 10:10:30 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-10 10:10:30 | WARNING  | app.database:patched_get_server_version_info:27 | 检测到openGauss，使用PostgreSQL 14.0兼容模式
+2025-08-10 10:10:30 | INFO     | app.services.queue_service:add_task_to_queue:52 | 🚀 提交任务到 Celery: e992a7ce-8182-46fa-bfd7-c5c0396381e6
+2025-08-10 10:10:31 | INFO     | app.services.queue_service:add_task_to_queue:61 | ✅ 任务已提交，Celery任务ID: 08206c2e-1c9b-41a5-b1e2-c8020291f551
+2025-08-10 10:10:31 | INFO     | app.main:request_logging_middleware:237 | 📤 POST http://188.245.175.156:8208/api/v1/tasks/e992a7ce-8182-46fa-bfd7-c5c0396381e6/recheck - 状态码: 200 - 耗时: 0.526s
+2025-08-10 10:10:44 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/tasks/e992a7ce-8182-46fa-bfd7-c5c0396381e6/progress
+2025-08-10 10:10:44 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-10 10:10:44 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/tasks/e992a7ce-8182-46fa-bfd7-c5c0396381e6/progress - 状态码: 200 - 耗时: 0.030s
+2025-08-10 10:10:54 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/tasks/e992a7ce-8182-46fa-bfd7-c5c0396381e6/progress
+2025-08-10 10:10:54 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-10 10:10:54 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/tasks/e992a7ce-8182-46fa-bfd7-c5c0396381e6/progress - 状态码: 200 - 耗时: 0.016s
+2025-08-10 10:11:03 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/tasks/e992a7ce-8182-46fa-bfd7-c5c0396381e6/progress
+2025-08-10 10:11:03 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-10 10:11:03 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/tasks/e992a7ce-8182-46fa-bfd7-c5c0396381e6/progress - 状态码: 200 - 耗时: 0.017s
+2025-08-10 10:11:11 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/tasks/e992a7ce-8182-46fa-bfd7-c5c0396381e6/progress
+2025-08-10 10:11:11 | INFO     | app.services.queue_service:__init__:35 | QueueService 初始化完成，使用 Celery Broker: redis://188.245.175.156:6379/3
+2025-08-10 10:11:11 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/tasks/e992a7ce-8182-46fa-bfd7-c5c0396381e6/progress - 状态码: 200 - 耗时: 0.014s
+2025-08-10 10:11:18 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/results/?page=1&size=20&task_id=de8296b9-c86d-4962-959d-e00024c9dd33
+2025-08-10 10:11:18 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/results/?page=1&size=20&task_id=de8296b9-c86d-4962-959d-e00024c9dd33 - 状态码: 200 - 耗时: 0.042s
+2025-08-10 10:11:25 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/results/?page=1&size=20&task_id=e992a7ce-8182-46fa-bfd7-c5c0396381e6
+2025-08-10 10:11:25 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/results/?page=1&size=20&task_id=e992a7ce-8182-46fa-bfd7-c5c0396381e6 - 状态码: 200 - 耗时: 0.018s
+2025-08-10 10:11:55 | INFO     | app.main:request_logging_middleware:228 | 📥 GET http://188.245.175.156:8208/api/v1/results/?page=1&size=20&task_id=e992a7ce-8182-46fa-bfd7-c5c0396381e6
+2025-08-10 10:11:55 | INFO     | app.main:request_logging_middleware:237 | 📤 GET http://188.245.175.156:8208/api/v1/results/?page=1&size=20&task_id=e992a7ce-8182-46fa-bfd7-c5c0396381e6 - 状态码: 200 - 耗时: 0.009s
+2025-08-10 10:12:46 | INFO     | app.main:request_logging_middleware:228 | 📥 POST http://188.245.175.156:8208/api/v1/tasks/
+2025-08-10 10:12:46 | INFO     | app.main:request_logging_middleware:237 | 📤 POST http://188.245.175.156:8208/api/v1/tasks/ - 状态码: 200 - 耗时: 0.032s
