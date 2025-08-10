@@ -9,7 +9,6 @@ from typing import Dict, Any, Optional
 from datetime import datetime
 from loguru import logger
 from contextlib import contextmanager
-from app.workers.review_worker import process_review_task, process_review_file
 from celery import current_app
 
 from app.config import get_settings
@@ -105,6 +104,7 @@ class QueueService:
         """
         将任务添加到 Celery 队列（检查重复）
         """
+        from app.workers.review_worker import process_review_task
         try:
             # 检查任务是否已经在处理中
             if self.is_task_processing(task_id):
@@ -132,6 +132,7 @@ class QueueService:
         """
         将文件添加到处理队列（检查重复）
         """
+        from app.workers.review_worker import process_review_file
         try:
             # 检查文件是否已经在处理中
             if self.is_file_processing(file_id):
