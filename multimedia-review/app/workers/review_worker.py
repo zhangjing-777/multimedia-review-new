@@ -213,70 +213,111 @@ def _process_document_file(file_obj, db: Session) -> List[Dict]:
         logger.error(f"文档处理失败: {e}", exc_info=True)
         return []
 
+# 优化后的 _process_pdf_file 函数 - 智能选择处理方法
 def _process_pdf_file(file_obj, strategy_type: str, strategy_contents: str, db: Session) -> List[Dict]:
-    """处理PDF文件"""
+    """处理PDF文件 - 优化版本"""
     try:
         
         logger.info(f"处理PDF文件: {file_obj.original_name}")
         
         all_violations = []
+        has_extractable_text = False
         
-        # 方法1：提取文本内容
+        # 方法1：尝试提取文本内容
         try:
             with open(file_obj.file_path, 'rb') as file:
                 pdf_reader = PyPDF2.PdfReader(file)
                 text_content = ""
+                text_length_threshold = 100  # 如果提取的文本少于100字符，认为是扫描版
                 
                 for page_num, page in enumerate(pdf_reader.pages, 1):
                     page_text = page.extract_text()
                     if page_text.strip():
                         text_content += f"\n[页面 {page_num}]\n{page_text}"
                 
-                if text_content.strip():
-                    logger.info(f"从PDF提取到文本，长度: {len(text_content)}")
+                # 判断是否有足够的可提取文本
+                if len(text_content.strip()) > text_length_threshold:
+                    has_extractable_text = True
+                    logger.info(f"从PDF提取到文本，长度: {len(text_content)} (文本版PDF)")
+                    
+                    # 审核提取的文本
                     text_violations = _review_text_content_sync(
                         text_content, strategy_type, strategy_contents
                     )
+                    for violation in text_violations:
+                        violation["source_description"] = "PDF文本提取"
+                        _save_violation_result(violation, str(file_obj.id), None, db)
                     all_violations.extend(text_violations)
+                else:
+                    logger.info("PDF文本提取量较少，可能是扫描版PDF")
         
         except Exception as e:
             logger.warning(f"PDF文本提取失败: {e}")
         
-        # 方法2：转换为图片进行OCR
-        try:
-            logger.info("将PDF转换为图片进行OCR处理")
-            images = convert_from_path(file_obj.file_path, dpi=200, first_page=1, last_page=5)  # 限制前5页
-            
-            for page_num, image in enumerate(images, 1):
-                # 保存临时图片
-                temp_image_path = f"/tmp/pdf_page_{file_obj.id}_{page_num}.jpg"
-                image.save(temp_image_path, 'JPEG')
-                
-                try:
-                    # OCR + 视觉审核
-                    page_violations = _process_image_content_sync(
-                        temp_image_path, strategy_type, strategy_contents, page_num
-                    )
-                    all_violations.extend(page_violations)
-                    
-                finally:
-                    # 清理临时文件
-                    if os.path.exists(temp_image_path):
-                        os.remove(temp_image_path)
+        # 方法2：图片OCR处理 - 根据情况决定是否执行
+        should_do_ocr = True
         
-        except Exception as e:
-            logger.warning(f"PDF图片转换失败: {e}")
+        if has_extractable_text:
+            # 如果已经有文本内容，只对前2页做图片审核（检查图像违规）
+            max_pages = 2
+            logger.info("PDF有可提取文本，将对前2页进行图像内容审核")
+        else:
+            # 如果没有文本内容，对更多页面做OCR
+            max_pages = 5
+            logger.info("PDF文本提取较少，将对前5页进行OCR和图像审核")
+        
+        if should_do_ocr:
+            try:
+                logger.info(f"将PDF转换为图片进行处理（最多{max_pages}页）")
+                images = convert_from_path(file_obj.file_path, dpi=200, first_page=1, last_page=max_pages)
+                
+                for page_num, image in enumerate(images, 1):
+                    # 保存临时图片
+                    temp_image_path = f"/tmp/pdf_page_{file_obj.id}_{page_num}.jpg"
+                    image.save(temp_image_path, 'JPEG')
+                    
+                    try:
+                        # OCR + 视觉审核
+                        page_violations = _process_image_content_sync(
+                            temp_image_path, strategy_type, strategy_contents, page_num
+                        )
+                        
+                        # 添加页面来源信息并保存
+                        for violation in page_violations:
+                            violation["source_description"] = f"PDF第{page_num}页图像"
+                            _save_violation_result(violation, str(file_obj.id), page_num, db)
+                        all_violations.extend(page_violations)
+                        
+                    finally:
+                        # 清理临时文件
+                        if os.path.exists(temp_image_path):
+                            os.remove(temp_image_path)
+            
+            except Exception as e:
+                logger.warning(f"PDF图片转换失败: {e}")
+        
+        # 确保数据库提交
+        try:
+            db.commit()
+            logger.info(f"PDF处理完成，保存了 {len(all_violations)} 个检测结果到数据库")
+        except Exception as commit_error:
+            logger.error(f"提交数据库失败: {commit_error}")
+            db.rollback()
         
         # 更新OCR统计
         _update_file_ocr_stats(file_obj, len(all_violations), db)
         
-        logger.info(f"PDF处理完成，发现 {len(all_violations)} 个检测结果")
+        processing_method = "文本提取" if has_extractable_text else "OCR识别"
+        logger.info(f"PDF处理完成({processing_method})，发现 {len(all_violations)} 个检测结果")
         return all_violations
     
     except Exception as e:
         logger.error(f"PDF处理失败: {e}", exc_info=True)
+        db.rollback()
         return []
 
+
+# 修改 _process_word_file 函数 - 确保数据库提交
 def _process_word_file(file_obj, strategy_type: str, strategy_contents: str, db: Session) -> List[Dict]:
     """处理Word文件"""
     try:
@@ -300,6 +341,18 @@ def _process_word_file(file_obj, strategy_type: str, strategy_contents: str, db:
         # 审核文本内容
         violations = _review_text_content_sync(text_content, strategy_type, strategy_contents)
         
+        # 添加保存逻辑
+        for violation in violations:
+            _save_violation_result(violation, str(file_obj.id), 1, db)
+        
+        # 确保数据库提交
+        try:
+            db.commit()
+            logger.info(f"Word处理完成，保存了 {len(violations)} 个检测结果到数据库")
+        except Exception as commit_error:
+            logger.error(f"提交数据库失败: {commit_error}")
+            db.rollback()
+        
         # 更新统计
         _update_file_ocr_stats(file_obj, len(violations), db)
         
@@ -308,10 +361,230 @@ def _process_word_file(file_obj, strategy_type: str, strategy_contents: str, db:
     
     except Exception as e:
         logger.error(f"Word文件处理失败: {e}", exc_info=True)
+        db.rollback()
         return []
 
+
+# 修改 _process_text_file 函数 - 确保数据库提交
+def _process_text_file(file_obj, db: Session) -> List[Dict]:
+    """处理纯文本文件（修复版）"""
+    try:
+        # 获取任务信息
+        task = db.query(ReviewTask).filter(ReviewTask.id == file_obj.task_id).first()
+        if not task:
+            logger.error(f"无法找到任务: {file_obj.task_id}")
+            return []
+        
+        strategy_type = task.strategy_type
+        strategy_contents = task.strategy_contents
+        
+        logger.info(f"开始处理文本文件: {file_obj.original_name}")
+        
+        # 检查文件是否存在
+        if not os.path.exists(file_obj.file_path):
+            logger.error(f"文本文件不存在: {file_obj.file_path}")
+            return []
+        
+        # 读取文本内容
+        text_content = ""
+        encodings = ['utf-8', 'gbk', 'gb2312', 'latin1']
+        
+        for encoding in encodings:
+            try:
+                with open(file_obj.file_path, 'r', encoding=encoding) as f:
+                    text_content = f.read()
+                logger.info(f"成功使用 {encoding} 编码读取文件")
+                break
+            except UnicodeDecodeError:
+                continue
+        
+        if not text_content:
+            logger.error("无法读取文本文件内容")
+            return []
+        
+        if not text_content.strip():
+            logger.warning("文本文件内容为空")
+            return []
+        
+        logger.info(f"读取到文本内容，长度: {len(text_content)}")
+        
+        # 审核文本内容
+        violations = _review_text_content_sync(text_content, strategy_type, strategy_contents)
+        
+        # 添加保存逻辑
+        for violation in violations:
+            _save_violation_result(violation, str(file_obj.id), 1, db)
+        
+        # 确保数据库提交
+        try:
+            db.commit()
+            logger.info(f"文本文件处理完成，保存了 {len(violations)} 个检测结果到数据库")
+        except Exception as commit_error:
+            logger.error(f"提交数据库失败: {commit_error}")
+            db.rollback()
+        
+        # 更新统计
+        _update_file_ocr_stats(file_obj, len(violations), db)
+        
+        logger.info(f"文本文件处理完成，发现 {len(violations)} 个检测结果")
+        return violations
+    
+    except Exception as e:
+        logger.error(f"文本文件处理失败: {e}", exc_info=True)
+        db.rollback()
+        return []
+
+
+# 修改 _process_video_file 函数 - 确保数据库提交
+def _process_video_file(file_obj, db: Session) -> List[Dict]:
+    """处理视频文件（修复版）"""
+    try:
+        # 获取任务信息
+        task = db.query(ReviewTask).filter(ReviewTask.id == file_obj.task_id).first()
+        if not task:
+            logger.error(f"无法找到任务: {file_obj.task_id}")
+            return []
+        
+        strategy_type = task.strategy_type
+        strategy_contents = task.strategy_contents
+        frame_interval = task.video_frame_interval or 5
+        
+        logger.info(f"开始处理视频: {file_obj.original_name}, 抽帧间隔: {frame_interval}秒")
+        
+        # 检查文件是否存在
+        if not os.path.exists(file_obj.file_path):
+            logger.error(f"视频文件不存在: {file_obj.file_path}")
+            return []
+        
+        # 提取视频帧
+        frame_paths = _extract_video_frames_fixed(file_obj.file_path, frame_interval)
+        
+        if not frame_paths:
+            logger.warning("没有成功提取到视频帧")
+            return []
+        
+        logger.info(f"成功提取 {len(frame_paths)} 个视频帧")
+        
+        all_violations = []
+        
+        try:
+            # 处理每一帧
+            for i, frame_path in enumerate(frame_paths):
+                frame_time = i * frame_interval
+                
+                logger.info(f"处理第 {i+1}/{len(frame_paths)} 帧, 时间: {frame_time}s")
+                
+                # 处理单帧
+                frame_violations = _process_image_content_sync(
+                    frame_path, strategy_type, strategy_contents
+                )
+                
+                # 添加时间戳信息并保存
+                for violation in frame_violations:
+                    violation["timestamp"] = frame_time
+                    violation["position"] = {"timestamp": frame_time, "frame_number": i+1}
+                    # 保存到数据库
+                    _save_violation_result(violation, str(file_obj.id), None, db, frame_time)
+                    all_violations.append(violation)
+        
+        finally:
+            # 清理临时帧文件
+            _cleanup_temp_files(frame_paths)
+        
+        # 确保数据库提交
+        try:
+            db.commit()
+            logger.info(f"视频处理完成，保存了 {len(all_violations)} 个检测结果到数据库")
+        except Exception as commit_error:
+            logger.error(f"提交数据库失败: {commit_error}")
+            db.rollback()
+        
+        # 更新统计
+        _update_file_ocr_stats(file_obj, len(all_violations), db)
+        
+        logger.info(f"视频处理完成，发现 {len(all_violations)} 个检测结果")
+        return all_violations
+    
+    except Exception as e:
+        logger.error(f"视频处理失败: {e}", exc_info=True)
+        db.rollback()
+        return []
+
+
+# 修复 _process_image_file 函数的保存逻辑
+def _process_image_file(file_obj, db: Session) -> List[Dict]:
+    """处理图片文件（修复版）"""
+    try:
+        ocr_service = OCRService()
+        ai_service = AIReviewService()
+        
+        # 修复：正确获取任务信息
+        task = db.query(ReviewTask).filter(ReviewTask.id == file_obj.task_id).first()
+        if not task:
+            logger.error(f"无法找到任务: {file_obj.task_id}")
+            return []
+        
+        strategy_type = task.strategy_type
+        strategy_contents = task.strategy_contents
+        
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        
+        try:
+            all_violations = []
+            
+            # OCR提取内容
+            ocr_result = loop.run_until_complete(
+                ocr_service.extract_content(file_obj.file_path)
+            )
+            
+            if ocr_result.get("success"):
+                # 处理文本块
+                text_blocks = [block for block in ocr_result.get("blocks", []) 
+                              if block["type"] == "text"]
+                if text_blocks:
+                    text_content = " ".join([block["text"] for block in text_blocks])
+                    text_violations = loop.run_until_complete(
+                        ai_service.review_text_content(text_content, strategy_type, strategy_contents)
+                    )
+                    
+                    for violation in text_violations:
+                        _save_violation_result(violation, str(file_obj.id), 1, db)
+                        all_violations.append(violation)
+            
+            # 直接对整个图片进行视觉审核
+            visual_violations = loop.run_until_complete(
+                ai_service.review_visual_content(file_obj.file_path, strategy_type, strategy_contents)
+            )
+            
+            for violation in visual_violations:
+                _save_violation_result(violation, str(file_obj.id), 1, db)
+                all_violations.append(violation)
+            
+            # 关键修复：在循环外进行数据库提交
+            
+        finally:
+            loop.close()
+        
+        # 修复：确保数据库提交在 finally 块外面
+        try:
+            db.commit()
+            logger.info(f"图片处理完成，保存了 {len(all_violations)} 个检测结果到数据库")
+        except Exception as commit_error:
+            logger.error(f"提交数据库失败: {commit_error}")
+            db.rollback()
+        
+        return all_violations
+        
+    except Exception as e:
+        logger.error(f"图片处理失败: {e}", exc_info=True)
+        db.rollback()
+        return []
+
+
+# 修改 _process_image_content_sync 函数，让它只返回结果，不保存
 def _process_image_content_sync(image_path: str, strategy_type: str, strategy_contents: str, page_num: int = 1) -> List[Dict]:
-    """同步处理图片内容"""
+    """同步处理图片内容（只返回结果，不保存到数据库）"""
     try:
         
         ocr_service = OCRService()
@@ -362,8 +635,10 @@ def _process_image_content_sync(image_path: str, strategy_type: str, strategy_co
         logger.error(f"图片内容处理失败: {e}", exc_info=True)
         return []
 
+
+# 修改 _review_text_content_sync 函数，让它只返回结果，不保存
 def _review_text_content_sync(text_content: str, strategy_type: str, strategy_contents: str) -> List[Dict]:
-    """同步审核文本内容"""
+    """同步审核文本内容（只返回结果，不保存到数据库）"""
     try:
         
         ai_service = AIReviewService()
@@ -382,6 +657,7 @@ def _review_text_content_sync(text_content: str, strategy_type: str, strategy_co
     except Exception as e:
         logger.error(f"文本审核失败: {e}", exc_info=True)
         return []
+
 
 def _update_file_ocr_stats(file_obj, results_count: int, db: Session):
     """更新文件OCR统计"""
@@ -441,122 +717,6 @@ def _update_task_progress(task_id: str, db: Session):
         logger.error(f"更新任务进度失败: {e}")
 
 
-def _process_image_file(file_obj, db: Session) -> List[Dict]:
-    """处理图片文件"""
-    ocr_service = OCRService()
-    ai_service = AIReviewService()
-    
-    # 修复：正确获取任务信息
-    task = db.query(ReviewTask).filter(ReviewTask.id == file_obj.task_id).first()
-    if not task:
-        logger.error(f"无法找到任务: {file_obj.task_id}")
-        return []
-    
-    strategy_type = task.strategy_type
-    strategy_contents = task.strategy_contents
-    
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    
-    try:
-        all_violations = []
-        
-        # OCR提取内容
-        ocr_result = loop.run_until_complete(
-            ocr_service.extract_content(file_obj.file_path)
-        )
-        
-        if ocr_result.get("success"):
-            # 处理文本块
-            text_blocks = [block for block in ocr_result.get("blocks", []) 
-                          if block["type"] == "text"]
-            if text_blocks:
-                text_content = " ".join([block["text"] for block in text_blocks])
-                text_violations = loop.run_until_complete(
-                    ai_service.review_text_content(text_content, strategy_type, strategy_contents)
-                )
-                
-                for violation in text_violations:
-                    _save_violation_result(violation, str(file_obj.id), 1, db)
-                    all_violations.append(violation)
-        
-        # 直接对整个图片进行视觉审核
-        visual_violations = loop.run_until_complete(
-            ai_service.review_visual_content(file_obj.file_path, strategy_type, strategy_contents)
-        )
-        
-        for violation in visual_violations:
-            _save_violation_result(violation, str(file_obj.id), 1, db)
-            all_violations.append(violation)
-        
-        return all_violations
-    
-    finally:
-        loop.close()
-
-
-def _process_video_file(file_obj, db: Session) -> List[Dict]:
-    """处理视频文件（修复版）"""
-    try:
-        # 获取任务信息
-        task = db.query(ReviewTask).filter(ReviewTask.id == file_obj.task_id).first()
-        if not task:
-            logger.error(f"无法找到任务: {file_obj.task_id}")
-            return []
-        
-        strategy_type = task.strategy_type
-        strategy_contents = task.strategy_contents
-        frame_interval = task.video_frame_interval or 5
-        
-        logger.info(f"开始处理视频: {file_obj.original_name}, 抽帧间隔: {frame_interval}秒")
-        
-        # 检查文件是否存在
-        if not os.path.exists(file_obj.file_path):
-            logger.error(f"视频文件不存在: {file_obj.file_path}")
-            return []
-        
-        # 提取视频帧
-        frame_paths = _extract_video_frames_fixed(file_obj.file_path, frame_interval)
-        
-        if not frame_paths:
-            logger.warning("没有成功提取到视频帧")
-            return []
-        
-        logger.info(f"成功提取 {len(frame_paths)} 个视频帧")
-        
-        all_violations = []
-        
-        try:
-            # 处理每一帧
-            for i, frame_path in enumerate(frame_paths):
-                frame_time = i * frame_interval
-                
-                logger.info(f"处理第 {i+1}/{len(frame_paths)} 帧, 时间: {frame_time}s")
-                
-                # 处理单帧
-                frame_violations = _process_image_content_sync(
-                    frame_path, strategy_type, strategy_contents
-                )
-                
-                # 添加时间戳信息
-                for violation in frame_violations:
-                    violation["timestamp"] = frame_time
-                    violation["position"] = {"timestamp": frame_time, "frame_number": i+1}
-                    all_violations.append(violation)
-        
-        finally:
-            # 清理临时帧文件
-            _cleanup_temp_files(frame_paths)
-        
-        # 更新统计
-        _update_file_ocr_stats(file_obj, len(all_violations), db)
-        
-        logger.info(f"视频处理完成，发现 {len(all_violations)} 个检测结果")
-        return all_violations
-    
-    except Exception as e:
-        logger.error(f"视频处理失败: {e}", exc_info=True)
-        return []
 
 def _extract_video_frames_fixed(video_path: str, interval: int = 5, max_frames: int = 20) -> List[str]:
     """提取视频帧（修复版）"""
@@ -637,61 +797,6 @@ def _cleanup_temp_files(file_paths: List[str]):
     except Exception as e:
         logger.warning(f"清理临时文件过程出错: {e}")
 
-# 修复文本文件处理
-def _process_text_file(file_obj, db: Session) -> List[Dict]:
-    """处理纯文本文件（修复版）"""
-    try:
-        # 获取任务信息
-        task = db.query(ReviewTask).filter(ReviewTask.id == file_obj.task_id).first()
-        if not task:
-            logger.error(f"无法找到任务: {file_obj.task_id}")
-            return []
-        
-        strategy_type = task.strategy_type
-        strategy_contents = task.strategy_contents
-        
-        logger.info(f"开始处理文本文件: {file_obj.original_name}")
-        
-        # 检查文件是否存在
-        if not os.path.exists(file_obj.file_path):
-            logger.error(f"文本文件不存在: {file_obj.file_path}")
-            return []
-        
-        # 读取文本内容
-        text_content = ""
-        encodings = ['utf-8', 'gbk', 'gb2312', 'latin1']
-        
-        for encoding in encodings:
-            try:
-                with open(file_obj.file_path, 'r', encoding=encoding) as f:
-                    text_content = f.read()
-                logger.info(f"成功使用 {encoding} 编码读取文件")
-                break
-            except UnicodeDecodeError:
-                continue
-        
-        if not text_content:
-            logger.error("无法读取文本文件内容")
-            return []
-        
-        if not text_content.strip():
-            logger.warning("文本文件内容为空")
-            return []
-        
-        logger.info(f"读取到文本内容，长度: {len(text_content)}")
-        
-        # 审核文本内容
-        violations = _review_text_content_sync(text_content, strategy_type, strategy_contents)
-        
-        # 更新统计
-        _update_file_ocr_stats(file_obj, len(violations), db)
-        
-        logger.info(f"文本文件处理完成，发现 {len(violations)} 个检测结果")
-        return violations
-    
-    except Exception as e:
-        logger.error(f"文本文件处理失败: {e}", exc_info=True)
-        return []
 
 
 def _save_violation_result(
