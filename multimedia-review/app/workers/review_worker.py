@@ -213,9 +213,9 @@ def _process_document_file(file_obj, db: Session) -> List[Dict]:
         logger.error(f"文档处理失败: {e}", exc_info=True)
         return []
 
-# 优化后的 _process_pdf_file 函数 - 智能选择处理方法
+
 def _process_pdf_file(file_obj, strategy_type: str, strategy_contents: str, db: Session) -> List[Dict]:
-    """处理PDF文件 - 优化版本"""
+    """处理PDF文件 - 修复页面限制"""
     try:
         
         logger.info(f"处理PDF文件: {file_obj.original_name}")
@@ -254,22 +254,21 @@ def _process_pdf_file(file_obj, strategy_type: str, strategy_contents: str, db: 
         except Exception as e:
             logger.warning(f"PDF文本提取失败: {e}")
         
-        # 方法2：图片OCR处理 - 根据情况决定是否执行
+        # 方法2：图片OCR处理 - 移除页面限制
         should_do_ocr = True
         
         if has_extractable_text:
-            # 如果已经有文本内容，只对前2页做图片审核（检查图像违规）
-            max_pages = 2
-            logger.info("PDF有可提取文本，将对前2页进行图像内容审核")
+            # 如果已经有文本内容，仍然对所有页面进行图像审核（检查图像违规）
+            logger.info("PDF有可提取文本，将对所有页面进行图像内容审核")
         else:
-            # 如果没有文本内容，对更多页面做OCR
-            max_pages = 5
-            logger.info("PDF文本提取较少，将对前5页进行OCR和图像审核")
+            # 如果没有文本内容，对所有页面做OCR
+            logger.info("PDF文本提取较少，将对所有页面进行OCR和图像审核")
         
         if should_do_ocr:
             try:
-                logger.info(f"将PDF转换为图片进行处理（最多{max_pages}页）")
-                images = convert_from_path(file_obj.file_path, dpi=200, first_page=1, last_page=max_pages)
+                logger.info(f"将PDF转换为图片进行处理（所有页面）")
+                # 移除 last_page 参数，处理所有页面
+                images = convert_from_path(file_obj.file_path, dpi=200)
                 
                 for page_num, image in enumerate(images, 1):
                     # 保存临时图片
@@ -527,7 +526,7 @@ def _process_video_file(file_obj, db: Session) -> List[Dict]:
         return []
 
 
-def _extract_video_frames_with_metadata(video_path: str, interval: int = 5, file_id: str = None, max_frames: int = 20) -> List[Dict]:
+def _extract_video_frames_with_metadata(video_path: str, interval: int = 5, file_id: str = None) -> List[Dict]:
     """提取视频帧并返回详细元数据"""
     try:
         frame_infos = []
@@ -557,7 +556,7 @@ def _extract_video_frames_with_metadata(video_path: str, interval: int = 5, file
         
         frame_num = 0
         saved_frames = 0
-        
+        max_frames = int(duration / interval)
         logger.info(f"视频信息: FPS={fps}, 总帧数={total_frames}, 时长={duration:.1f}s")
         logger.info(f"提取参数: 间隔={interval}s({frame_interval}帧), 最大帧数={max_frames}")
         
