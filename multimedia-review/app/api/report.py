@@ -9,7 +9,7 @@ from typing import Optional, Dict, List
 from fastapi import APIRouter, Depends, Query, Body
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
-from sqlalchemy import func, and_, or_
+from sqlalchemy import func, and_, or_, cast, Date
 import json
 from io import StringIO
 import csv
@@ -165,10 +165,14 @@ def _generate_report_data(db: Session, start_date: datetime, end_date: datetime,
     # 3. 违规统计
     violation_stats = _get_violation_statistics(db, date_filter, detailed)
     
-    # 4. 趋势分析（如果是详细报告）
+    # 4. 趋势分析（暂时使用简化版本）
     trend_stats = {}
     if detailed:
-        trend_stats = _get_trend_analysis(db, start_date, end_date, creator_id)
+        try:
+            trend_stats = _get_trend_analysis(db, start_date, end_date, creator_id)
+        except Exception as e:
+            logger.warning(f"趋势分析失败，使用简化版本: {e}")
+            trend_stats = _get_trend_analysis_simple(db, start_date, end_date, creator_id)
     
     # 5. 汇总数据
     summary = _calculate_summary(task_stats, file_stats, violation_stats)
@@ -180,6 +184,7 @@ def _generate_report_data(db: Session, start_date: datetime, end_date: datetime,
         "violations": violation_stats,
         "trends": trend_stats if detailed else None
     }
+
 
 def _get_task_statistics(db: Session, date_filter) -> Dict:
     """获取任务统计"""
@@ -380,9 +385,9 @@ def _get_violation_statistics(db: Session, date_filter, detailed: bool) -> Dict:
 def _get_trend_analysis(db: Session, start_date: datetime, end_date: datetime, creator_id: Optional[str]) -> Dict:
     """获取趋势分析"""
     
-    # 按天统计任务创建数量
+    # 按天统计任务创建数量 - 修复 PostgreSQL 兼容性
     daily_tasks = db.query(
-        func.date(ReviewTask.created_at).label('date'),
+        cast(ReviewTask.created_at, Date).label('date'),  # 修改：使用 cast 替代 func.date
         func.count(ReviewTask.id).label('count')
     ).filter(
         ReviewTask.created_at >= start_date,
@@ -392,11 +397,11 @@ def _get_trend_analysis(db: Session, start_date: datetime, end_date: datetime, c
     if creator_id:
         daily_tasks = daily_tasks.filter(ReviewTask.creator_id == creator_id)
     
-    daily_tasks = daily_tasks.group_by(func.date(ReviewTask.created_at)).all()
+    daily_tasks = daily_tasks.group_by(cast(ReviewTask.created_at, Date)).all()  # 修改：使用 cast
     
-    # 按天统计违规检测数量
+    # 按天统计违规检测数量 - 修复 PostgreSQL 兼容性
     daily_violations = db.query(
-        func.date(ReviewResult.created_at).label('date'),
+        cast(ReviewResult.created_at, Date).label('date'),  # 修改：使用 cast 替代 func.date
         func.count(ReviewResult.id).label('count')
     ).join(ReviewFile).join(ReviewTask).filter(
         ReviewTask.created_at >= start_date,
@@ -407,7 +412,7 @@ def _get_trend_analysis(db: Session, start_date: datetime, end_date: datetime, c
     if creator_id:
         daily_violations = daily_violations.filter(ReviewTask.creator_id == creator_id)
     
-    daily_violations = daily_violations.group_by(func.date(ReviewResult.created_at)).all()
+    daily_violations = daily_violations.group_by(cast(ReviewResult.created_at, Date)).all()  # 修改：使用 cast
     
     return {
         "daily_tasks": [
@@ -417,6 +422,7 @@ def _get_trend_analysis(db: Session, start_date: datetime, end_date: datetime, c
             {"date": str(stat.date), "count": stat.count} for stat in daily_violations
         ]
     }
+
 
 def _calculate_summary(task_stats: Dict, file_stats: Dict, violation_stats: Dict) -> Dict:
     """计算汇总数据"""
