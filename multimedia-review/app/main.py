@@ -15,7 +15,7 @@ import time
 
 from app.config import get_settings, ensure_upload_dir
 from app.database import init_database, health_check
-from app.api import task, upload, result
+from app.api import task, upload, result, report
 from app.utils.response import APIResponse
 
 
@@ -145,6 +145,12 @@ def register_routes(app: FastAPI):
         result.router,
         prefix=f"{API_V1_PREFIX}/results",
         tags=["审核结果"]
+    )
+
+    app.include_router(
+        report.router,
+        prefix=f"{API_V1_PREFIX}/reports", 
+        tags=["报告生成"]
     )
     
     # 健康检查端点
