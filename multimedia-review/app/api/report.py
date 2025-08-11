@@ -33,7 +33,7 @@ class ReportRequest(BaseModel):
     end_date: Optional[str] = Field(None, description="结束日期 YYYY-MM-DD")
     description: Optional[str] = Field(None, description="自然语言描述，如：本周、上个月、第三季度等")
     creator_id: Optional[str] = Field(None, description="创建者过滤")
-    format: str = Field("json", regex="^(json|csv|markdown)$", description="输出格式")
+    format: str = Field("json", pattern="^(json|csv|markdown)$", description="输出格式")
     detailed: bool = Field(True, description="是否包含详细统计")
 
 @router.post("/generate", summary="生成智能报告")
@@ -1031,7 +1031,7 @@ async def get_report_templates():
 @router.post("/export/enhanced", summary="导出增强报告")
 async def export_enhanced_report(
     request: ReportRequest,
-    export_format: str = Query("pdf", regex="^(pdf|excel|html|json)$", description="导出格式"),
+    export_format: str = Query("pdf", pattern="^(pdf|excel|html|json)$", description="导出格式"),
     include_charts: bool = Query(True, description="是否包含图表"),
     include_insights: bool = Query(True, description="是否包含智能分析"),
     db: Session = Depends(get_db)
