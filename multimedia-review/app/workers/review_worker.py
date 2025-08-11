@@ -14,6 +14,7 @@ from docx import Document
 import cv2
 import uuid
 import os
+from datetime import datetime
 
 from app.workers.celery_app import celery_app
 from app.database import SessionLocal
@@ -30,7 +31,7 @@ from app.utils.file_utils import FileUtils
 @celery_app.task(bind=True, name="process_review_task")
 def process_review_task(self, task_id: str):
     """
-    处理审核任务的主流程（带锁机制）
+    处理审核任务的主流程（修复错误failed状态）
     """
     db = SessionLocal()
     queue_service = QueueService()
@@ -54,8 +55,9 @@ def process_review_task(self, task_id: str):
             files = task_service.get_task_files(task_id, status=FileStatus.PENDING)
             
             if not files:
-                task_service.complete_task(task_id, success=False, error_message="没有待处理的文件")
-                return {"status": "failed", "message": "没有待处理的文件"}
+                # 修复：没有文件不应该标记为失败，而是完成
+                task_service.complete_task(task_id, success=True, error_message="没有待处理的文件")
+                return {"status": "completed", "message": "没有待处理的文件"}
             
             # 将所有文件添加到处理队列
             for file_obj in files:
@@ -85,17 +87,29 @@ def process_review_task(self, task_id: str):
     except Exception as e:
         logger.error(f"处理任务失败 {task_id}: {e}")
         
+        # 修复：不要立即标记任务为失败，只记录错误
+        # 让文件处理完成后再统一判断任务状态
         try:
+            # 只更新错误信息，不改变任务状态
             task_service = TaskService(db)
-            task_service.complete_task(task_id, success=False, error_message=str(e))
+            task = task_service.get_task_by_id(task_id)
+            if task.status == TaskStatus.PROCESSING:
+                # 如果任务还在处理中，不改变状态，只记录错误
+                task.error_message = f"启动过程中遇到问题: {str(e)}"
+                task.updated_at = datetime.utcnow()
+                db.commit()
+                logger.info(f"记录任务错误但保持处理状态: {task_id}")
+            # 如果任务不在处理中，才标记为失败
+            elif task.status == TaskStatus.PENDING:
+                task_service.complete_task(task_id, success=False, error_message=str(e))
         except Exception as save_error:
-            logger.error(f"保存任务失败状态时出错: {save_error}")
+            logger.error(f"保存任务错误信息时出错: {save_error}")
         
-        return {"status": "failed", "error": str(e)}
+        return {"status": "error", "error": str(e)}
     
     finally:
         db.close()
-
+ 
 
 @celery_app.task(bind=True, name="process_review_file") 
 def process_review_file(self, file_id: str, task_id: str, file_type: str):
