@@ -4,6 +4,7 @@ FastAPI 主应用入口
 """
 
 from fastapi import FastAPI, Request, HTTPException
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
@@ -13,7 +14,7 @@ import sys
 import traceback
 import time
 
-from app.config import get_settings, ensure_upload_dir
+from app.config import get_settings, ensure_upload_dir, ensure_static_dir
 from app.database import init_database, health_check
 from app.api import task, upload, result, report
 from app.utils.response import APIResponse
@@ -31,6 +32,10 @@ async def lifespan(app: FastAPI):
         # 确保上传目录存在
         ensure_upload_dir()
         logger.info("✅ 上传目录初始化完成")
+
+        # 确保静态文件目录存在
+        ensure_static_dir()  
+        logger.info("✅ 静态文件目录初始化完成")
         
         # 初始化数据库
         init_database()
@@ -71,6 +76,8 @@ def create_app() -> FastAPI:
         redoc_url="/redoc" if settings.DEBUG else None,
         lifespan=lifespan
     )
+
+    app.mount("/api/v1/static", StaticFiles(directory="/app/static"), name="static")
     
     # 配置CORS中间件
     app.add_middleware(

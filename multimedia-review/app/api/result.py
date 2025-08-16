@@ -20,6 +20,17 @@ from app.services.file_service import FileService
 from app.services.task_service import TaskService
 
 
+def _add_image_url(result_dict):
+    """为结果添加图片URL"""
+    position = result_dict.get("position", {})
+    static_url = position.get("static_url")
+    if static_url:
+        result_dict["image_url"] = static_url  
+        result_dict["has_image"] = True
+    else:
+        result_dict["has_image"] = False
+    return result_dict
+
 # 创建路由器
 router = APIRouter()
 
@@ -130,7 +141,7 @@ async def get_result_list(
     ).offset((page - 1) * size).limit(size).all()
     
     # 转换为字典格式
-    result_list = [result.to_dict() for result in results]
+    result_list = [_add_image_url(result.to_dict()) for result in results]
     
     return APIResponse.paginated(
         items=result_list,
@@ -166,7 +177,7 @@ async def get_file_results(
     # 转换为字典格式，包含位置信息用于前端标注
     result_list = []
     for result in results:
-        result_dict = result.to_dict()
+        result_dict = _add_image_url(result.to_dict())
         # 添加额外的前端展示信息
         result_dict["display_info"] = {
             "color": _get_result_color(result.violation_result),
@@ -303,7 +314,7 @@ async def get_pending_review_results(
     results = query.offset((page - 1) * size).limit(size).all()
     
     # 转换为字典格式
-    result_list = [result.to_dict() for result in results]
+    result_list = [_add_image_url(result.to_dict()) for result in results]
     
     return APIResponse.paginated(
         items=result_list,
@@ -331,7 +342,7 @@ async def get_result_detail(
         raise NotFoundError(f"审核结果不存在: {result_id}")
     
     return APIResponse.success(
-        data=result.to_dict(),
+        data=_add_image_url(result.to_dict()),
         message="查询成功"
     )
 
@@ -435,7 +446,7 @@ async def mark_result(
                (f", 修改字段: {modified_fields}" if modified_fields else ""))
     
     # 返回结果，包含修改信息
-    response_data = result.to_dict()
+    response_data = _add_image_url(result.to_dict())
     response_data["modification_info"] = {
         "modified_fields": modified_fields,
         "original_values": original_values,
@@ -712,7 +723,7 @@ async def get_result_history(
     return APIResponse.success(
         data={
             "result_id": result_id,
-            "current_values": result.to_dict(),
+            "current_values": _add_image_url(result.to_dict()),
             "modification_history": history,
             "is_reviewed": result.is_reviewed,
             "reviewer_id": result.reviewer_id,

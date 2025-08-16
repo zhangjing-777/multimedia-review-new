@@ -101,3 +101,17 @@ def ensure_upload_dir():
     subdirs = ["documents", "images", "videos", "temp"]
     for subdir in subdirs:
         os.makedirs(os.path.join(settings.UPLOAD_DIR, subdir), exist_ok=True)
+
+
+def ensure_static_dir():
+    """确保静态文件目录存在"""
+    settings = get_settings()
+    
+    # 静态文件根目录
+    static_root = "/app/static"
+    os.makedirs(static_root, exist_ok=True)
+    
+    # 创建子目录
+    static_subdirs = ["evidence", "frames", "thumbnails"]
+    for subdir in static_subdirs:
+        os.makedirs(os.path.join(static_root, subdir), exist_ok=True)

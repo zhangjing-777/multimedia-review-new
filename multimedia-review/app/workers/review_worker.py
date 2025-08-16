@@ -14,6 +14,7 @@ from docx import Document
 import cv2
 import uuid
 import os
+import shutil
 from datetime import datetime
 
 from app.workers.celery_app import celery_app
@@ -288,6 +289,8 @@ def _process_pdf_file(file_obj, strategy_type: str, strategy_contents: str, db: 
                     # 保存临时图片
                     temp_image_path = f"/tmp/pdf_page_{file_obj.id}_{page_num}.jpg"
                     image.save(temp_image_path, 'JPEG')
+                    # 复制到静态目录
+                    static_url = _copy_to_static(temp_image_path, f"pdf_page_{file_obj.id}_{page_num}")
                     
                     try:
                         # OCR + 视觉审核
@@ -298,6 +301,10 @@ def _process_pdf_file(file_obj, strategy_type: str, strategy_contents: str, db: 
                         # 添加页面来源信息并保存
                         for violation in page_violations:
                             violation["source_description"] = f"PDF第{page_num}页图像"
+                            if static_url:
+                                if not violation.get("position"):
+                                    violation["position"] = {}
+                                violation["position"]["static_url"] = static_url
                             _save_violation_result(violation, str(file_obj.id), page_num, db)
                         all_violations.extend(page_violations)
                         
@@ -588,12 +595,15 @@ def _extract_video_frames_with_metadata(video_path: str, interval: int = 5, file
                 frame_path = os.path.join(frames_dir, frame_filename)
                 
                 if cv2.imwrite(frame_path, frame):
+                    # 复制到静态目录
+                    static_url = _copy_to_static(frame_path, f"frame_{file_id}_{saved_frames+1:04d}")
                     # 构建帧信息对象
                     frame_info = {
                         "frame_number": saved_frames + 1,  # 从1开始的帧序号
                         "video_frame_position": frame_num,  # 在视频中的实际帧位置
                         "timestamp": round(frame_time, 1),  # 时间戳（秒）
                         "path": frame_path,  # 完整路径
+                        "static_url": static_url,
                         "filename": frame_filename,  # 文件名
                         "relative_path": f"video_frames/{file_id}/{frame_filename}",  # 相对路径
                         "file_size": os.path.getsize(frame_path) if os.path.exists(frame_path) else 0
@@ -672,6 +682,8 @@ def _save_violation_result_with_frame_info(
 def _process_image_file(file_obj, db: Session) -> List[Dict]:
     """处理图片文件（修复版）"""
     try:
+        # 为上传的图片创建静态链接
+        static_url = _copy_to_static(file_obj.file_path, f"upload_{file_obj.id}")
         ocr_service = OCRService()
         ai_service = AIReviewService()
         
@@ -704,8 +716,10 @@ def _process_image_file(file_obj, db: Session) -> List[Dict]:
                     text_violations = loop.run_until_complete(
                         ai_service.review_text_content(text_content, strategy_type, strategy_contents)
                     )
-                    
+
                     for violation in text_violations:
+                        if static_url and not violation.get("position"):
+                            violation["position"] = {"static_url": static_url}
                         _save_violation_result(violation, str(file_obj.id), 1, db)
                         all_violations.append(violation)
             
@@ -715,6 +729,8 @@ def _process_image_file(file_obj, db: Session) -> List[Dict]:
             )
             
             for violation in visual_violations:
+                if static_url and not violation.get("position"):
+                    violation["position"] = {"static_url": static_url}
                 _save_violation_result(violation, str(file_obj.id), 1, db)
                 all_violations.append(violation)
             
@@ -954,7 +970,28 @@ def _cleanup_temp_files(file_paths: List[str]):
     except Exception as e:
         logger.warning(f"清理临时文件过程出错: {e}")
 
-
+def _copy_to_static(temp_path, prefix="evidence"):
+    """复制图片到静态目录并返回URL"""
+    try:
+        if not os.path.exists(temp_path):
+            return None
+        
+        # 生成文件名
+        ext = os.path.splitext(temp_path)[1] or '.jpg'
+        filename = f"{prefix}_{uuid.uuid4()}{ext}"
+        
+        # 确保目录存在
+        static_dir = "/app/static/evidence"
+        os.makedirs(static_dir, exist_ok=True)
+        
+        # 复制文件
+        static_path = os.path.join(static_dir, filename)
+        shutil.copy2(temp_path, static_path)
+        
+        # 返回URL
+        return f"/api/v1/static/evidence/{filename}"
+    except:
+        return None
 
 def _save_violation_result(
     violation: Dict, 
